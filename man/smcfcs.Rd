@@ -86,8 +86,9 @@ The second element \code{smCoefIter} is a three dimensional array containing the
 of the substantive model parameters obtained at the end of each iteration of the algorithm.
 The array is indexed by: imputation number, parameter number, iteration.
 
-If the substantive model is linear or logistic regression, `smcfcs` will impute missing
-outcomes, if present, using the specified substantive model.
+If the substantive model is linear or logistic regression, `smcfcs` will automatically impute missing
+outcomes, if present, using the specified substantive model. However, even in this case, the
+user should specify "" in the element of method corresponding to the outcome variable.
 
 The development of this package was supported by a UK Medical Research Council
 Fellowship (MR/K02180X/1). Part of its development took place while the author was
@@ -130,29 +131,32 @@ if (requireNamespace("mitools", quietly = TRUE)) {
                  method=c("","","norm","x^2",""),predictorMatrix=predMatrix)
 
   #impute missing x1 and x2, where they interact in substantive model
-  imps <- smcfcs(ex_lininter, smtype="lm", smformula="y~x1+x2+x1x2",
-                 method=c("","norm","logreg","x1*x2"))
+  imps <- smcfcs(ex_lininter, smtype="lm", smformula="y~x1+x2+x1*x2",
+                 method=c("","norm","logreg"))
 
   #logistic regression substantive model, with quadratic covariate effects
   imps <- smcfcs(ex_logisticquad, smtype="logistic", smformula="y~z+x+xsq",
                  method=c("","","norm","x^2",""))
 
   #Cox regression substantive model, with only main covariate effects
-  library(survival)
-  imps <- smcfcs(ex_coxquad, smtype="coxph", smformula="Surv(t,d)~z+x+xsq",
-                 method=c("","","","norm","x^2",""))
+  if (requireNamespace("survival", quietly = TRUE)) {
+    imps <- smcfcs(ex_coxquad, smtype="coxph", smformula="Surv(t,d)~z+x+xsq",
+                   method=c("","","","norm","x^2",""))
 
-  #competing risks substantive model, with only main covariate effects
-  imps <- smcfcs(ex_compet, smtype="compet",
-                 smformula=c("Surv(t,d==1)~x1+x2", "Surv(t,d==2)~x1+x2"),
-                 method=c("","","logreg","norm"))
+    #competing risks substantive model, with only main covariate effects
+    imps <- smcfcs(ex_compet, smtype="compet",
+                   smformula=c("Surv(t,d==1)~x1+x2", "Surv(t,d==2)~x1+x2"),
+                   method=c("","","logreg","norm"))
+  }
 
   #if mitools is installed, fit model for first competing risk
   if (requireNamespace("mitools", quietly = TRUE)) {
+    library(mitools)
     impobj <- imputationList(imps$impDatasets)
     models <- with(impobj, coxph(Surv(t,d==1)~x1+x2))
     summary(MIcombine(models))
   }
+
 }
 }
 \author{
@@ -162,6 +166,6 @@ Jonathan Bartlett \email{jonathan.bartlett@lshtm.ac.uk} \url{http://www.missingd
 \references{
 Bartlett JW, Seaman SR, White IR, Carpenter JR. Multiple imputation of covariates
 by fully conditional specification: accommodating the substantive model. Statistical Methods
-in Medical Research 2014. \url{http://doi.org/10.1177/0962280214521348}
+in Medical Research 2014; 24(4): 462-487. \url{http://doi.org/10.1177/0962280214521348}
 }
 

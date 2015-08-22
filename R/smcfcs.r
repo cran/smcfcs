@@ -24,7 +24,6 @@
 #'   \item{y}{Continuous outcome}
 #'   \item{x1}{Partially observed normally distributed covariate}
 #'   \item{x2}{Partially obserevd binary covariate}
-#'   \item{x1x2}{The interaction of x1 with x2}
 #' }
 #'
 "ex_lininter"
@@ -102,8 +101,10 @@
 #' of the substantive model parameters obtained at the end of each iteration of the algorithm.
 #' The array is indexed by: imputation number, parameter number, iteration.
 #'
-#' If the substantive model is linear or logistic regression, `smcfcs` will impute missing
-#' outcomes, if present, using the specified substantive model.
+#' If the substantive model is linear or logistic regression, `smcfcs` will automatically impute missing
+#' outcomes, if present, using the specified substantive model. However, even in this case, the
+#' user should specify "" in the element of method corresponding to the outcome variable.
+#'
 #'
 #' The development of this package was supported by a UK Medical Research Council
 #' Fellowship (MR/K02180X/1). Part of its development took place while the author was
@@ -165,7 +166,9 @@
 #'
 #' @references Bartlett JW, Seaman SR, White IR, Carpenter JR. Multiple imputation of covariates
 #' by fully conditional specification: accommodating the substantive model. Statistical Methods
-#' in Medical Research 2014. \url{http://doi.org/10.1177/0962280214521348}
+#' in Medical Research 2014; 24(4): 462-487. \url{http://doi.org/10.1177/0962280214521348}
+
+#' @import stats
 
 #' @export
 smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE) {
@@ -183,7 +186,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
     d <- originaldata[,dCol]
 
     nullMod <- survival::coxph(Surv(originaldata[,timeCol],originaldata[,dCol])~1)
-    basehaz <- basehaz(nullMod)
+    basehaz <- survival::basehaz(nullMod)
     H0indices <- match(originaldata[,timeCol], basehaz[,2])
     rm(nullMod)
   }
@@ -200,7 +203,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
     linpred <- vector("list", numCauses)
     for (cause in 1:numCauses) {
       nullMod <- survival::coxph(as.formula(paste(strsplit(smformula[[cause]],"~")[[1]][1],"~1")), originaldata)
-      basehaz <- basehaz(nullMod)
+      basehaz <- survival::basehaz(nullMod)
       H0[[cause]] <- basehaz[,1]
       H0indices[[cause]] <- match(originaldata[,timeCol], basehaz[,2])
       linpred[[cause]] <- as.formula(smformula[[cause]])
@@ -233,14 +236,14 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
     if (method[outcomeCol]!="") stop("The element of the method argument corresponding to the outcome variable should be empty.")
   }
   else {
-    if (method[outcomeCol]!=c("","")) stop("The elements of the method argument corresponding to the outcome variables should be empty.")
+    if (sum(method[outcomeCol]!=c("",""))>0) stop("The elements of the method argument corresponding to the outcome variables should be empty.")
   }
 
   #fully observed vars are those that are fully observed and are covariates in the substantive model
   fullObsVars <- which((colSums(r)==n) & (colnames(originaldata) %in% smcovnames))
 
   #passive variables
-  passiveVars <- which((method!="") & (method!="norm") & (method!="logreg") & (method!="poisson") & (method!="podds") & (method!="mlogit"))
+  passiveVars <- which((method!="") & (method!="norm") & (method!="logreg") & (method!="poisson") & (method!="podds") & (method!="mlogit") & (method!="latnorm"))
 
   print(paste("Outcome variable(s):", paste(colnames(originaldata)[outcomeCol],collapse=',')))
   print(paste("Passive variables:", paste(colnames(originaldata)[passiveVars],collapse=',')))
@@ -254,14 +257,22 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
 
   for (imp in 1:m) {
 
-    print(c("Imputation ",imp))
+    print(paste("Imputation ",imp))
 
     #initial imputation of each partially observed variable based on observed values
     for (var in 1:length(partialVars)) {
-      imputations[[imp]][r[,partialVars[var]]==0,partialVars[var]] <- sample(imputations[[imp]][r[,partialVars[var]]==1,partialVars[var]], size=sum(r[,partialVars[var]]==0), replace=TRUE)
+      targetCol <- partialVars[var]
+      #if (method[targetCol]=="latnorm") {
+        #initialize latent predictors with single error prone measurement
+        #errorProneCols <- which(errorProneMatrix[targetCol,]==1)
+        #imputations[[imp]][,targetCol] <- apply(imputations[[imp]][,errorProneCols], 1, firstnonna)
+      #}
+      #else {
+        imputations[[imp]][r[,targetCol]==0,targetCol] <- sample(imputations[[imp]][r[,targetCol]==1,targetCol], size=sum(r[,targetCol]==0), replace=TRUE)
+      #}
     }
 
-    #impute missing outcomes, if present (using improper imputation)
+    #initial imputations of missing outcomes, if present (using improper imputation)
     if ((smtype=="lm") | (smtype=="logistic")) {
       if (sum(r[,outcomeCol])<n) {
         if (imp==1) {
@@ -273,7 +284,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
         imputationNeeded <- (1:n)[r[,outcomeCol]==0]
         #estimate parameters of substantive model
         if (smtype=="lm") {
-          ymod <- lm(as.formula(smformula),imputations[[imp]])
+          ymod <- stats::lm(as.formula(smformula),imputations[[imp]])
           beta <- ymod$coef
           sigmasq <- summary(ymod)$sigma^2
           #fill out missing values so that model.matrix works for all rows
@@ -311,11 +322,20 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
           predictorCols <- predictorCols[! predictorCols %in% outcomeCol]
         }
         if ((imp==1) & (cyclenum==1)) {
-          print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[predictorCols],collapse=','),collapse=','))
+          #if (method[targetCol]=="latnorm") {
+            #print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[c(predictorCols,which(errorProneMatrix[targetCol,]==1))],collapse=',')," plus outcome",collapse=','))
+          #}
+          #else {
+            print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[predictorCols],collapse=',')," plus outcome",collapse=','))
+          #}
         }
-
-        xmodformula <- as.formula(paste(colnames(imputations[[imp]])[targetCol], "~", paste(colnames(imputations[[imp]])[predictorCols], collapse="+"),sep=""))
-        if (method[targetCol]=="norm") {
+        if (length(predictorCols)>0) {
+          xmodformula <- as.formula(paste(colnames(imputations[[imp]])[targetCol], "~", paste(colnames(imputations[[imp]])[predictorCols], collapse="+"),sep=""))
+        }
+        else {
+          xmodformula <- as.formula(paste(colnames(imputations[[imp]])[targetCol], "~1",sep=""))
+        }
+        if ((method[targetCol]=="norm") | (method[targetCol]=="latnorm")) {
           #estimate parameters of covariate model
           xmod <- lm(xmodformula, data=imputations[[imp]])
           #take draw from posterior of covariate model parameters
@@ -339,21 +359,46 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
         }
         else if (method[targetCol]=="podds") {
           xmod <- VGAM::vglm(xmodformula, VGAM::propodds, data=imputations[[imp]])
-          newbeta <- coefficients(xmod) + MASS::mvrnorm(1, mu=rep(0,ncol(vcov(xmod))), Sigma=vcov(xmod))
-          linpreds <- matrix(model.matrix(xmod) %*% newbeta, byrow=TRUE, ncol=(nlevels(imputations[[imp]][,targetCol])-1))
+          newbeta <- VGAM::coef(xmod) + MASS::mvrnorm(1, mu=rep(0,ncol(VGAM::vcov(xmod))), Sigma=VGAM::vcov(xmod))
+          linpreds <- matrix((VGAM::model.matrix(xmod)) %*% newbeta, byrow=TRUE, ncol=(nlevels(imputations[[imp]][,targetCol])-1))
           cumprobs <- cbind(1/(1+exp(linpreds)), rep(1,nrow(linpreds)))
           xfitted <- cbind(cumprobs[,1] ,cumprobs[,2:ncol(cumprobs)] - cumprobs[,1:(ncol(cumprobs)-1)])
         }
         else if (method[targetCol]=="mlogit") {
           xmod <- VGAM::vglm(xmodformula, VGAM::multinomial(refLevel=1), data=imputations[[imp]])
-          newbeta <- coef(xmod) + MASS::mvrnorm(1, mu=rep(0,ncol(vcov(xmod))), Sigma=vcov(xmod))
-          linpreds <- matrix(model.matrix(xmod) %*% newbeta, byrow=TRUE, ncol=(nlevels(imputations[[imp]][,targetCol])-1))
+          newbeta <- VGAM::coef(xmod) + MASS::mvrnorm(1, mu=rep(0,ncol(VGAM::vcov(xmod))), Sigma=VGAM::vcov(xmod))
+          linpreds <- matrix((VGAM::model.matrix(xmod)) %*% newbeta, byrow=TRUE, ncol=(nlevels(imputations[[imp]][,targetCol])-1))
           denom <- 1+rowSums(exp(linpreds))
           xfitted <-cbind(1/denom, exp(linpreds) / denom)
         }
         if (noisy==TRUE) {
           print(summary(xmod))
         }
+
+        #if latent normal, estimate error variance and calculate required conditional expectation and variance
+#         if (method[targetCol]=="latnorm") {
+#           errorProneCols <- which(errorProneMatrix[targetCol,]==1)
+#           wmean <- rowMeans(imputations[[imp]][,errorProneCols], na.rm=TRUE)
+#           n_i <- apply(imputations[[imp]][,errorProneCols], 1, sumna)
+#           sum_ni <- sum(n_i)
+#           #estimate error variance
+#           if (cyclenum==1) {
+#             xmat <- matrix(wmean, nrow=nrow(imputations[[imp]]), ncol=length(errorProneCols))
+#             uVec <- c(as.matrix(imputations[[imp]][,errorProneCols] - xmat))
+#             sigmausq <- sum(uVec^2, na.rm=TRUE) / (sum_ni - n)
+#           }
+#           else {
+#             xmat <- matrix(imputations[[imp]][,targetCol], nrow=nrow(imputations[[imp]]), ncol=length(errorProneCols))
+#             uVec <- c(as.matrix(imputations[[imp]][,errorProneCols] - xmat))
+#             sigmausq <- sum(uVec^2, na.rm=TRUE) / sum_ni
+#           }
+#           #take draw from posterior of error variance
+#           sigmausq <- sigmausq*sum_ni/rchisq(1,sum_ni)
+#           #calculate conditional mean and variance
+#           lambda <- newsigmasq/(newsigmasq+sigmausq/n_i)
+#           xfitted <- xfitted + lambda * (wmean - xfitted)
+#           newsigmasq <- newsigmasq*(1-lambda)
+#         }
 
         #estimate parameters of substantive model
         if (smtype=="lm") {
@@ -378,7 +423,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
           ymod <- survival::coxph(as.formula(smformula), imputations[[imp]])
           outcomeModBeta <- modPostDraw(ymod)
           ymod$coefficients <- outcomeModBeta
-          basehaz <- basehaz(ymod, centered=FALSE)[,1]
+          basehaz <- survival::basehaz(ymod, centered=FALSE)[,1]
           H0 <- basehaz[H0indices]
           if (noisy==TRUE) {
             print(summary(ymod))
@@ -389,7 +434,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
             ymod <- survival::coxph(as.formula(smformula[[cause]]), imputations[[imp]])
             outcomeModBeta[[cause]] <- modPostDraw(ymod)
             ymod$coefficients <- outcomeModBeta[[cause]]
-            basehaz <- basehaz(ymod, centered=FALSE)[,1]
+            basehaz <- survival::basehaz(ymod, centered=FALSE)[,1]
             H0[[cause]] <- basehaz[H0indices[[cause]]]
             if (noisy==TRUE) {
               print(summary(ymod))
@@ -442,7 +487,12 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
 
           for (xMisVal in 1:numberOutcomes) {
             if (method[targetCol]=="logreg") {
-              valToImpute <- xMisVal-1
+              if (is.factor(imputations[[imp]][,targetCol])==TRUE) {
+                valToImpute <- levels(imputations[[imp]][,targetCol])[xMisVal]
+              }
+              else {
+                valToImpute <- xMisVal-1
+              }
             }
             else {
               valToImpute <- levels(imputations[[imp]][,targetCol])[xMisVal]
@@ -482,7 +532,13 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
 
           if (method[targetCol]=="logreg") {
             directImpProbs = directImpProbs[,2]
-            imputations[[imp]][imputationNeeded,targetCol] <- rbinom(length(imputationNeeded),1,directImpProbs)
+            if (is.factor(imputations[[imp]][,targetCol])==TRUE) {
+              imputations[[imp]][imputationNeeded,targetCol] <- levels(imputations[[imp]][,targetCol])[1]
+              imputations[[imp]][imputationNeeded,targetCol][rbinom(length(imputationNeeded),1,directImpProbs)==1] <- levels(imputations[[imp]][,targetCol])[2]
+            }
+            else {
+              imputations[[imp]][imputationNeeded,targetCol] <- rbinom(length(imputationNeeded),1,directImpProbs)
+            }
           }
           else {
             imputations[[imp]][imputationNeeded,targetCol] <- levels(imputations[[imp]][,targetCol])[apply(directImpProbs, 1, catdraw)]
@@ -499,11 +555,8 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
 
           while ((length(imputationNeeded)>0) & (j<firstTryLimit)) {
             #sample from covariate model
-            if (method[targetCol]=="norm") {
+            if ((method[targetCol]=="norm") | (method[targetCol]=="latnorm")) {
               imputations[[imp]][imputationNeeded,targetCol] <- rnorm(length(imputationNeeded),xfitted[imputationNeeded],newsigmasq^0.5)
-            }
-            else if (method[targetCol]=="logreg") {
-              imputations[[imp]][imputationNeeded,targetCol] <- rbinom(length(imputationNeeded),size=1,prob=xfitted[imputationNeeded])
             }
             else if (method[targetCol]=="poisson") {
               imputations[[imp]][imputationNeeded,targetCol] <- rpois(length(imputationNeeded),xfitted[imputationNeeded])
@@ -561,6 +614,9 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
             else if (method[targetCol]=="poisson") {
               tempData[,targetCol] <- rpois(rjlimit,xfitted[i])
             }
+            else if (method[targetCol]=="latnorm") {
+              tempData[,targetCol] <- rnorm(rjlimit,xfitted[i],newsigmasq[i]^0.5)
+            }
 
             #passively impute
             tempData <- updatePassiveVars(tempData, method, passiveVars)
@@ -607,7 +663,31 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
         }
       }
 
-
+      #imputations of missing outcomes, if present (using proper imputation), for regression and logistic
+      #substantive models
+      if ((smtype=="lm") | (smtype=="logistic")) {
+        if (sum(r[,outcomeCol])<n) {
+          imputationNeeded <- (1:n)[r[,outcomeCol]==0]
+          #estimate parameters of substantive model using those with outcomes observed
+          if (smtype=="lm") {
+            ymod <- lm(as.formula(smformula),imputations[[imp]][r[,outcomeCol]==1,])
+            beta <- ymod$coef
+            sigmasq <- summary(ymod)$sigma^2
+            varcov <- vcov(ymod)
+            outcomeModResVar <- (sigmasq*ymod$df) / rchisq(1,ymod$df)
+            outcomeModBeta = beta + chol((outcomeModResVar/sigmasq)*varcov) %*% rnorm(length(beta))
+            outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
+            imputations[[imp]][imputationNeeded,outcomeCol] <- rnorm(length(imputationNeeded),outmodxb[imputationNeeded], sigmasq^0.5)
+          }
+          else if (smtype=="logistic") {
+            ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]][r[,outcomeCol]==1,])
+            outcomeModBeta = modPostDraw(ymod)
+            outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
+            prob <- expit(outmodxb[imputationNeeded])
+            imputations[[imp]][imputationNeeded,outcomeCol] <- rbinom(length(imputationNeeded),1,prob)
+          }
+        }
+      }
     }
 
   }
@@ -625,6 +705,15 @@ updatePassiveVars <- function(data, method, passivecols) {
 
 expit <- function(x) {
   exp(x)/(1+exp(x))
+}
+
+sumna <- function(x) {
+  sum(is.na(x)==FALSE)
+}
+
+#returns first non missing entry of x
+firstnonna <- function(x) {
+  x[is.na(x)==FALSE][1]
 }
 
 catdraw <- function(prob) {
