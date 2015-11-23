@@ -166,7 +166,7 @@
 #'
 #' @references Bartlett JW, Seaman SR, White IR, Carpenter JR. Multiple imputation of covariates
 #' by fully conditional specification: accommodating the substantive model. Statistical Methods
-#' in Medical Research 2014; 24(4): 462-487. \url{http://doi.org/10.1177/0962280214521348}
+#' in Medical Research 2015; 24(4): 462-487. \url{http://doi.org/10.1177/0962280214521348}
 
 #' @import stats
 
@@ -254,6 +254,8 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
   for (imp in 1:m) {
     imputations[[imp]] <- originaldata
   }
+
+  rjFailCount <- 0
 
   for (imp in 1:m) {
 
@@ -358,6 +360,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
           xfitted <- exp(model.matrix(xmod) %*% newbeta)
         }
         else if (method[targetCol]=="podds") {
+          if (is.ordered(imputations[[imp]][,targetCol])==FALSE) stop("Variables to be imputed using method podds must be stored as ordered factors.")
           xmod <- VGAM::vglm(xmodformula, VGAM::propodds, data=imputations[[imp]])
           newbeta <- VGAM::coef(xmod) + MASS::mvrnorm(1, mu=rep(0,ncol(VGAM::vcov(xmod))), Sigma=VGAM::vcov(xmod))
           linpreds <- matrix((VGAM::model.matrix(xmod)) %*% newbeta, byrow=TRUE, ncol=(nlevels(imputations[[imp]][,targetCol])-1))
@@ -365,6 +368,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
           xfitted <- cbind(cumprobs[,1] ,cumprobs[,2:ncol(cumprobs)] - cumprobs[,1:(ncol(cumprobs)-1)])
         }
         else if (method[targetCol]=="mlogit") {
+          if (is.factor(imputations[[imp]][,targetCol])==FALSE) stop("Variables to be imputed using method modds must be stored as factors.")
           xmod <- VGAM::vglm(xmodformula, VGAM::multinomial(refLevel=1), data=imputations[[imp]])
           newbeta <- VGAM::coef(xmod) + MASS::mvrnorm(1, mu=rep(0,ncol(VGAM::vcov(xmod))), Sigma=VGAM::vcov(xmod))
           linpreds <- matrix((VGAM::model.matrix(xmod)) %*% newbeta, byrow=TRUE, ncol=(nlevels(imputations[[imp]][,targetCol])-1))
@@ -505,8 +509,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
             if (smtype=="lm") {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
               deviation <- imputations[[imp]][imputationNeeded,outcomeCol] - outmodxb[imputationNeeded]
-              outcomeDens <- dnorm(deviation, mean=0, sd=1)
-              outcomeDensCovDens[,xMisVal] <- outcomeDens * fittedMean[imputationNeeded,xMisVal]
+              outcomeDens <- dnorm(deviation, mean=0, sd=outcomeModResVar^0.5)
             }
             else if (smtype=="logistic") {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
@@ -655,7 +658,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
             if (sum(reject)<rjlimit) {
               imputations[[imp]][i,targetCol] <- tempData[reject==0,targetCol][1]
             } else {
-              print("Rejection sampling has failed for one record. You may want to increase the rejecton sampling limit.")
+              rjFailCount <- rjFailCount + 1
             }
           }
           #update passive variables
@@ -690,6 +693,10 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
       }
     }
 
+  }
+
+  if (rjFailCount>0) {
+    warning(paste("Rejection sampleing failed ",rjFailCount," times (across all variables, iterations, and imputations). You may want to increase the rejection sampling limit.",sep=""))
   }
 
   list(impDatasets=imputations, smCoefIter=smCoefIter)
