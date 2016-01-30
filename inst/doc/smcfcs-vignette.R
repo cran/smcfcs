@@ -42,7 +42,7 @@ summary(MIcombine(models))
 
 ## ---- fig.width = 6, fig.height = 4--------------------------------------
 # impute once with a larger number of iterations than the default 10
-imps <- smcfcs(ex_lininter, smtype="lm", smformula="y~x1+x2+x1x2",method=c("","norm","logreg","x1*x2"),m=1,numit=100)
+imps <- smcfcs(ex_linquad, smtype="lm", smformula="y~z+x+xsq",method=c("","","norm","x^2",""),predictorMatrix=predMatrix,m=1,numit=100)
 # plot estimates of the fourth parameter of the substantive model against iteration number
 plot(imps$smCoefIter[1,4,])
 

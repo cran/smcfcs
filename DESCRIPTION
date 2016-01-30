@@ -1,8 +1,8 @@
 Package: smcfcs
 Title: Multiple Imputation of Covariates by Substantive Model
         Compatible Fully Conditional Specification
-Version: 1.1.1
-Authors@R: person("Jonathan", "Bartlett", email = "jonathan.bartlett@lshtm.ac.uk",
+Version: 1.2.0
+Authors@R: person("Jonathan", "Bartlett", email = "jwb133@googlemail.com",
     role = c("aut", "cre"))
 URL: http://www.missingdata.org.uk, http://thestatsgeek.com
 Description: Implements multiple imputation of missing covariates by
@@ -15,12 +15,12 @@ Depends: R (>= 3.1.2)
 License: GPL-3
 LazyData: true
 Imports: MASS, survival, VGAM, stats
-Suggests: knitr, mitools
+Suggests: knitr, rmarkdown, mitools
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2015-11-22 19:16:57 UTC; JWB-beast
+Packaged: 2016-01-30 10:06:12 UTC; Bart
 Author: Jonathan Bartlett [aut, cre]
-Maintainer: Jonathan Bartlett <jonathan.bartlett@lshtm.ac.uk>
+Maintainer: Jonathan Bartlett <jwb133@googlemail.com>
 Repository: CRAN
-Date/Publication: 2015-11-23 12:20:47
+Date/Publication: 2016-01-30 18:52:23

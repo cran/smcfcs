@@ -44,6 +44,21 @@
 #'
 "ex_logisticquad"
 
+#' Simulated example data with count outcome, modelled using Poisson regression
+#'
+#' A dataset containing simulated data where the count outcome depends on two
+#' covariates, x and z, with missing values in x. The substantive model is
+#' Poisson regression.
+#'
+#' @format A data frame with 1000 rows and 3 variables:
+#' \describe{
+#'   \item{y}{Count outcome}
+#'   \item{z}{Fully observed covariate, with linear effect on outcome}
+#'   \item{x}{Partially observed normally distributed covariate, with linear effect on outcome}
+#' }
+#'
+"ex_poisson"
+
 #' Simulated example data with time to event outcome and quadratic covariate effects
 #'
 #' A dataset containing simulated data where a time to event outcome depends quadratically
@@ -86,12 +101,13 @@
 #' Fully Conditional Specification multiple imputation approach proposed by
 #' Bartlett \emph{et al} 2014 (see references).
 #'
-#' Currently imputation is supported for linear regression ("lm"), logistic
-#' regression ("logistic"), Cox regression for time to event
-#' data ("coxph"), and Cox models for competing risks data. For the latter, a Cox
-#' model is assumed for each cause of failure, and the event indicator should be integer
-#' coded with 0 corresponding to censoring, 1 corresponding to failure from the first
-#' cause etc.
+#' Currently imputation is supported for linear regression (\code{"lm"}),
+#' logistic regression (\code{"logistic"}), Poisson regression
+#' (\code{"poisson"}), Cox regression for time to event data (\code{"coxph"}),
+#' and Cox models for competing risks data (\code{"compet"}). For the latter, a
+#' Cox model is assumed for each cause of failure, and the event indicator
+#' should be integer coded with 0 corresponding to censoring, 1 corresponding to
+#' failure from the first cause etc.
 #'
 #' The function returns a list. The first element \code{impDataset} of the list is a list of the imputed
 #' datasets. Models (e.g. the substantive model) can be fitted to each and results
@@ -101,9 +117,10 @@
 #' of the substantive model parameters obtained at the end of each iteration of the algorithm.
 #' The array is indexed by: imputation number, parameter number, iteration.
 #'
-#' If the substantive model is linear or logistic regression, `smcfcs` will automatically impute missing
-#' outcomes, if present, using the specified substantive model. However, even in this case, the
-#' user should specify "" in the element of method corresponding to the outcome variable.
+#' If the substantive model is linear, logistic or Poisson regression,
+#' \code{smcfcs} will automatically impute missing outcomes, if present, using
+#' the specified substantive model. However, even in this case, the user should
+#' specify "" in the element of method corresponding to the outcome variable.
 #'
 #'
 #' The development of this package was supported by a UK Medical Research Council
@@ -116,7 +133,8 @@
 #'
 #' @param originaldata The original data frame with missing values.
 #' @param smtype A string specifying the type of substantive model. Possible
-#' values are \code{"lm"}, \code{"logistic"}, \code{"coxph"} and \code{"compet"}.
+#' values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"coxph"}
+#'  and \code{"compet"}.
 #' @param smformula The formula of the substantive model. For \code{"coxph"} substantive
 #' models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
 #' substantive models, a list should be passed consisting of the Cox models
@@ -159,7 +177,7 @@
 #' \code{smCoefIter} a three dimension matrix containing the substantive model parameter
 #' values. The matrix is indexed by [imputation,parameter number,iteration]
 #'
-#' @author Jonathan Bartlett \email{jonathan.bartlett@@lshtm.ac.uk} \url{http://www.missingdata.org.uk}
+#' @author Jonathan Bartlett \email{jwb133@@googlemail.com} \url{http://www.missingdata.org.uk}
 #' \url{http://thestatsgeek.com}
 #'
 #' @example data-raw/examples.r
@@ -177,6 +195,10 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
   if (ncol(originaldata)!=length(method)) stop("Method argument must have the same length as the number of columns in the data frame.")
 
   n <- dim(originaldata)[1]
+
+  #create matrix of response indicators
+  r <- 1*(is.na(originaldata)==0)
+
   #find column numbers of partially observed, fully observed variables, and outcome
   if (smtype=="coxph") {
 
@@ -214,9 +236,6 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
     outcomeCol <- which(colnames(originaldata)==as.formula(smformula)[[2]])
   }
 
-  #create matrix of response indicators
-  r <- 1*(is.na(originaldata)==0)
-
   if (smtype=="compet") {
     smcovnames <- attr(terms(as.formula(smformula[[1]])), "term.labels")
     for (cause in 2:numCauses) {
@@ -238,6 +257,13 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
   else {
     if (sum(method[outcomeCol]!=c("",""))>0) stop("The elements of the method argument corresponding to the outcome variables should be empty.")
   }
+
+  nonOutcomeCols <- 1:ncol(originaldata)
+  nonOutcomeCols <- nonOutcomeCols[nonOutcomeCols!=outcomeCol]
+  #check that methods are given for each partially observed column, and not given for fully observed columns
+  if (all.equal(which(method[nonOutcomeCols]!=""), which(colSums(r[,nonOutcomeCols])!=n), check.names=FALSE)==FALSE)
+    stop("The method argument must have empty \"\" elements corresponding to fully observed columns and non-empty
+         elements for those columns which have missing values.")
 
   #fully observed vars are those that are fully observed and are covariates in the substantive model
   fullObsVars <- which((colSums(r)==n) & (colnames(originaldata) %in% smcovnames))
@@ -275,7 +301,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
     }
 
     #initial imputations of missing outcomes, if present (using improper imputation)
-    if ((smtype=="lm") | (smtype=="logistic")) {
+    if ((smtype=="lm") | (smtype=="logistic") | (smtype=="poisson")) {
       if (sum(r[,outcomeCol])<n) {
         if (imp==1) {
           print("Imputing missing outcomes using specified substantive model.")
@@ -301,6 +327,13 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
           outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% beta
           prob <- expit(outmodxb[imputationNeeded])
           imputations[[imp]][imputationNeeded,outcomeCol] <- rbinom(length(imputationNeeded),1,prob)
+        }
+        else if (smtype=="poisson") {
+          ymod <- glm(as.formula(smformula),family="poisson",imputations[[imp]])
+          beta <- ymod$coef
+          imputations[[imp]][imputationNeeded,outcomeCol] <- 0
+          outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% beta
+          imputations[[imp]][imputationNeeded,outcomeCol] <- rpois(length(imputationNeeded),exp(outmodxb[imputationNeeded]))
         }
       }
     }
@@ -423,6 +456,13 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
             print(summary(ymod))
           }
         }
+        else if (smtype=="poisson") {
+          ymod <- glm(as.formula(smformula),family="poisson",imputations[[imp]])
+          outcomeModBeta = modPostDraw(ymod)
+          if (noisy==TRUE) {
+            print(summary(ymod))
+          }
+        }
         else if (smtype=="coxph") {
           ymod <- survival::coxph(as.formula(smformula), imputations[[imp]])
           outcomeModBeta <- modPostDraw(ymod)
@@ -516,6 +556,10 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
               prob <- expit(outmodxb[imputationNeeded])
               outcomeDens <- prob*imputations[[imp]][imputationNeeded,outcomeCol] + (1-prob)*(1-imputations[[imp]][imputationNeeded,outcomeCol])
             }
+            else if (smtype=="poisson") {
+              outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
+              outcomeDens <- dpois(imputations[[imp]][imputationNeeded,outcomeCol], exp(outmodxb[imputationNeeded]))
+            }
             else if (smtype=="coxph") {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]])
               outmodxb <- outmodxb[,2:dim(outmodxb)[2]] %*% outcomeModBeta
@@ -581,6 +625,11 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
               prob = prob*imputations[[imp]][imputationNeeded,outcomeCol] + (1-prob)*(1-imputations[[imp]][imputationNeeded,outcomeCol])
               reject = 1*(uDraw>prob)
             }
+            else if (smtype=="poisson") {
+              outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
+              prob = dpois(imputations[[imp]][imputationNeeded,outcomeCol], exp(outmodxb[imputationNeeded]))
+              reject = 1*(uDraw>prob)
+            }
             else if (smtype=="coxph") {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]])
               outmodxb <- outmodxb[,2:dim(outmodxb)[2]] %*% outcomeModBeta
@@ -635,6 +684,11 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
               outmodxb <-  model.matrix(as.formula(smformula),tempData) %*% outcomeModBeta
               prob = expit(outmodxb)
               prob = prob*tempData[,outcomeCol] + (1-prob)*(1-tempData[,outcomeCol])
+              reject = 1*(uDraw>prob)
+            }
+            else if (smtype=="poisson") {
+              outmodxb <-  model.matrix(as.formula(smformula),tempData) %*% outcomeModBeta
+              prob = dpois(tempData[,outcomeCol], exp(outmodxb))
               reject = 1*(uDraw>prob)
             }
             else if (smtype=="coxph") {
@@ -696,7 +750,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
   }
 
   if (rjFailCount>0) {
-    warning(paste("Rejection sampleing failed ",rjFailCount," times (across all variables, iterations, and imputations). You may want to increase the rejection sampling limit.",sep=""))
+    warning(paste("Rejection sampling failed ",rjFailCount," times (across all variables, iterations, and imputations). You may want to increase the rejection sampling limit.",sep=""))
   }
 
   list(impDatasets=imputations, smCoefIter=smCoefIter)

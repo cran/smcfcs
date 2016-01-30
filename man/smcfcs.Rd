@@ -11,7 +11,8 @@ smcfcs(originaldata, smtype, smformula, method, predictorMatrix = NULL,
 \item{originaldata}{The original data frame with missing values.}
 
 \item{smtype}{A string specifying the type of substantive model. Possible
-values are \code{"lm"}, \code{"logistic"}, \code{"coxph"} and \code{"compet"}.}
+values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"coxph"}
+ and \code{"compet"}.}
 
 \item{smformula}{The formula of the substantive model. For \code{"coxph"} substantive
 models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
@@ -71,12 +72,13 @@ smcfcs imputes missing values of covariates using the Substantive Model Compatib
 Fully Conditional Specification multiple imputation approach proposed by
 Bartlett \emph{et al} 2014 (see references).
 
-Currently imputation is supported for linear regression ("lm"), logistic
-regression ("logistic"), Cox regression for time to event
-data ("coxph"), and Cox models for competing risks data. For the latter, a Cox
-model is assumed for each cause of failure, and the event indicator should be integer
-coded with 0 corresponding to censoring, 1 corresponding to failure from the first
-cause etc.
+Currently imputation is supported for linear regression (\code{"lm"}),
+logistic regression (\code{"logistic"}), Poisson regression
+(\code{"poisson"}), Cox regression for time to event data (\code{"coxph"}),
+and Cox models for competing risks data (\code{"compet"}). For the latter, a
+Cox model is assumed for each cause of failure, and the event indicator
+should be integer coded with 0 corresponding to censoring, 1 corresponding to
+failure from the first cause etc.
 
 The function returns a list. The first element \code{impDataset} of the list is a list of the imputed
 datasets. Models (e.g. the substantive model) can be fitted to each and results
@@ -86,9 +88,10 @@ The second element \code{smCoefIter} is a three dimensional array containing the
 of the substantive model parameters obtained at the end of each iteration of the algorithm.
 The array is indexed by: imputation number, parameter number, iteration.
 
-If the substantive model is linear or logistic regression, `smcfcs` will automatically impute missing
-outcomes, if present, using the specified substantive model. However, even in this case, the
-user should specify "" in the element of method corresponding to the outcome variable.
+If the substantive model is linear, logistic or Poisson regression,
+\code{smcfcs} will automatically impute missing outcomes, if present, using
+the specified substantive model. However, even in this case, the user should
+specify "" in the element of method corresponding to the outcome variable.
 
 The development of this package was supported by a UK Medical Research Council
 Fellowship (MR/K02180X/1). Part of its development took place while the author was
@@ -138,6 +141,16 @@ if (requireNamespace("mitools", quietly = TRUE)) {
   imps <- smcfcs(ex_logisticquad, smtype="logistic", smformula="y~z+x+xsq",
                  method=c("","","norm","x^2",""))
 
+  #Poisson regression substantive model
+  imps <- smcfcs(ex_poisson, smtype="poisson", smformula="y~x+z",
+                 method=c("","norm",""))
+  if (requireNamespace("mitools", quietly = TRUE)) {
+    library(mitools)
+    impobj <- imputationList(imps$impDatasets)
+    models <- with(impobj, glm(y~x+z,family=poisson))
+    summary(MIcombine(models))
+  }
+
   #Cox regression substantive model, with only main covariate effects
   if (requireNamespace("survival", quietly = TRUE)) {
     imps <- smcfcs(ex_coxquad, smtype="coxph", smformula="Surv(t,d)~z+x+xsq",
@@ -160,7 +173,7 @@ if (requireNamespace("mitools", quietly = TRUE)) {
 }
 }
 \author{
-Jonathan Bartlett \email{jonathan.bartlett@lshtm.ac.uk} \url{http://www.missingdata.org.uk}
+Jonathan Bartlett \email{jwb133@googlemail.com} \url{http://www.missingdata.org.uk}
 \url{http://thestatsgeek.com}
 }
 \references{
