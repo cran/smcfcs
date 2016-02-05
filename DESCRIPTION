@@ -1,7 +1,7 @@
 Package: smcfcs
 Title: Multiple Imputation of Covariates by Substantive Model
         Compatible Fully Conditional Specification
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: person("Jonathan", "Bartlett", email = "jwb133@googlemail.com",
     role = c("aut", "cre"))
 URL: http://www.missingdata.org.uk, http://thestatsgeek.com
@@ -19,8 +19,8 @@ Suggests: knitr, rmarkdown, mitools
 VignetteBuilder: knitr
 RoxygenNote: 5.0.1
 NeedsCompilation: no
-Packaged: 2016-01-30 10:06:12 UTC; Bart
+Packaged: 2016-02-04 19:00:14 UTC; Bart
 Author: Jonathan Bartlett [aut, cre]
 Maintainer: Jonathan Bartlett <jwb133@googlemail.com>
 Repository: CRAN
-Date/Publication: 2016-01-30 18:52:23
+Date/Publication: 2016-02-05 00:50:10
