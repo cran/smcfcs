@@ -4,13 +4,15 @@
 
 <head>
 
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <meta name="author" content="Jonathan Bartlett" />
 
-<meta name="date" content="2016-01-30" />
+<meta name="date" content="2017-06-03" />
 
 <title>smcfcs</title>
 
@@ -54,14 +56,10 @@ code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Ann
 code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
 code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
 </style>
-<style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
-</style>
 
 
-<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0A%7D%0Apre%20%7B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
 
 </head>
 
@@ -69,11 +67,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 
 
-<div id="header">
-<h1 class="title">smcfcs</h1>
+
+<h1 class="title toc-ignore">smcfcs</h1>
 <h4 class="author"><em>Jonathan Bartlett</em></h4>
-<h4 class="date"><em>2016-01-30</em></h4>
-</div>
+<h4 class="date"><em>2017-06-03</em></h4>
+
 
 
 <div id="introduction" class="section level1">
@@ -151,10 +149,10 @@ models &lt;-<span class="st"> </span><span class="kw">with</span>(impobj, <span 
 ##       with(impobj, lm(y ~ z + x + xsq))
 ##       MIcombine.default(models)
 ##               results         se    (lower   upper) missInfo
-## (Intercept) 0.9314374 0.04305428 0.8462533 1.016621     19 %
-## z           1.0115451 0.03786833 0.9358488 1.087241     28 %
-## x           0.9845177 0.03353937 0.9184628 1.050573     13 %
-## xsq         1.0376067 0.02235589 0.9936738 1.081540     10 %</code></pre>
+## (Intercept) 0.9231209 0.03992140 0.8447304 1.001511      8 %
+## z           1.0084380 0.03732068 0.9338289 1.083047     28 %
+## x           0.9775920 0.03229906 0.9141735 1.041011      8 %
+## xsq         1.0464377 0.02285179 1.0012931 1.091582     17 %</code></pre>
 <p>Here the data were simulated such that the coefficients of <code>z</code>, <code>x</code> and <code>xsq</code> are all 1. The estimates we have obtained are (reassuringly) close to these true parameter values. To illustrate the dangers of imputing a covariate using an imputation model which is not compatible with the substantive model, we now re-impute <code>x</code>, but this time imputing compatibly with a model for <code>y</code> which does not allow for the quadratic effect:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#impute missing values in x, compatibly with model for y which omits the quadratic effect</span>
 imps &lt;-<span class="st"> </span><span class="kw">smcfcs</span>(ex_linquad, <span class="dt">smtype=</span><span class="st">&quot;lm&quot;</span>, <span class="dt">smformula=</span><span class="st">&quot;y~z+x&quot;</span>,<span class="dt">method=</span><span class="kw">c</span>(<span class="st">&quot;&quot;</span>,<span class="st">&quot;&quot;</span>,<span class="st">&quot;norm&quot;</span>,<span class="st">&quot;x^2&quot;</span>,<span class="st">&quot;&quot;</span>))</code></pre></div>
@@ -168,8 +166,8 @@ imps &lt;-<span class="st"> </span><span class="kw">smcfcs</span>(ex_linquad, <s
 ## [1] &quot;Imputation  3&quot;
 ## [1] &quot;Imputation  4&quot;
 ## [1] &quot;Imputation  5&quot;</code></pre>
-<pre><code>## Warning in smcfcs(ex_linquad, smtype = &quot;lm&quot;, smformula = &quot;y~z+x&quot;, method
-## = c(&quot;&quot;, : Rejection sampling failed 3 times (across all variables,
+<pre><code>## Warning in smcfcs.core(originaldata, smtype, smformula, method,
+## predictorMatrix, : Rejection sampling failed 2 times (across all variables,
 ## iterations, and imputations). You may want to increase the rejection
 ## sampling limit.</code></pre>
 <p><code>smcfcs</code> has issued some warnings about rejection sampling. We discuss this later in this vignette, but here we will continue and proceed to fit a model for <code>y</code> which includes both <code>x</code> and <code>xsq</code> (plus <code>z</code>) as covariates:</p>
@@ -181,10 +179,10 @@ models &lt;-<span class="st"> </span><span class="kw">with</span>(impobj, <span 
 ##       with(impobj, lm(y ~ z + x + xsq))
 ##       MIcombine.default(models)
 ##               results         se    (lower    upper) missInfo
-## (Intercept) 1.2645626 0.08024052 1.0969123 1.4322128     50 %
-## z           1.0802626 0.06175214 0.9538006 1.2067245     42 %
-## x           0.9579516 0.11692247 0.6623973 1.2535059     90 %
-## xsq         0.6041747 0.06339612 0.4484521 0.7598972     86 %</code></pre>
+## (Intercept) 1.2002150 0.09107014 1.0014753 1.3989548     64 %
+## z           1.0655943 0.06209122 0.9380696 1.1931189     43 %
+## x           0.8848137 0.04871052 0.7877776 0.9818498     25 %
+## xsq         0.6544610 0.07018091 0.4797257 0.8291963     88 %</code></pre>
 <p>Now we have an estimate of the coefficient of <code>xsq</code> of 0.60, which is considerably smaller than the true value 1 used to simulate the data. This bias is due to the imputation model we have just used for <code>x</code> being misspecified. In particular, it was misspecified due to the fact it wrongly assumed a linear dependence of <code>y</code> on <code>x</code>, rather than allowing a quadratic dependence.</p>
 </div>
 <div id="imputing-using-auxiliary-variables-with-smcfcs" class="section level2">
@@ -203,9 +201,10 @@ imps &lt;-<span class="st"> </span><span class="kw">smcfcs</span>(ex_linquad, <s
 ## [1] &quot;Imputation  3&quot;
 ## [1] &quot;Imputation  4&quot;
 ## [1] &quot;Imputation  5&quot;</code></pre>
-<pre><code>## Warning in smcfcs(ex_linquad, smtype = &quot;lm&quot;, smformula = &quot;y~z+x+xsq+v&quot;, :
-## Rejection sampling failed 1 times (across all variables, iterations, and
-## imputations). You may want to increase the rejection sampling limit.</code></pre>
+<pre><code>## Warning in smcfcs.core(originaldata, smtype, smformula, method,
+## predictorMatrix, : Rejection sampling failed 1 times (across all variables,
+## iterations, and imputations). You may want to increase the rejection
+## sampling limit.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># fit substantive model, which omits v</span>
 impobj &lt;-<span class="st"> </span><span class="kw">imputationList</span>(imps$impDatasets)
 models &lt;-<span class="st"> </span><span class="kw">with</span>(impobj, <span class="kw">lm</span>(y~z+x+xsq))
@@ -214,10 +213,10 @@ models &lt;-<span class="st"> </span><span class="kw">with</span>(impobj, <span 
 ##       with(impobj, lm(y ~ z + x + xsq))
 ##       MIcombine.default(models)
 ##               results         se    (lower   upper) missInfo
-## (Intercept) 0.9289935 0.04445245 0.8403230 1.017664     26 %
-## z           1.0164477 0.03420426 0.9492172 1.083678     10 %
-## x           0.9828459 0.03805117 0.9058054 1.059886     36 %
-## xsq         1.0367009 0.02272418 0.9919379 1.081464     14 %</code></pre>
+## (Intercept) 0.9368427 0.04129275 0.8554519 1.018233     14 %
+## z           1.0149793 0.03376977 0.9486492 1.081310      9 %
+## x           0.9910976 0.03395791 0.9240664 1.058129     16 %
+## xsq         1.0369558 0.02300237 0.9915210 1.082391     17 %</code></pre>
 <p>For outcome models other than linear regression, this approach is not entirely justifiable due to the lack of collapsibility of non-linear models. For example, if a Cox model is assumed for a failure time given variables <code>x</code> and <code>v</code>, the hazard function given only <code>x</code> (i.e. omitting <code>v</code> from the model) is no longer a Cox model. Further research is warranted to explore how this might affect the resulting inferences.</p>
 <p>It is also possible to include the auxiliary variable <code>v</code> without adding it to the outcome model (as given in the <code>smformula</code> argument), through specification of the <code>predictorMatrix</code> argument. Doing so conditions on <code>v</code>, but assumes that the outcome is independent of <code>v</code>, conditional on whatever covariates are specified in <code>smformula</code>. This should thus only be used when the latter assumption is justified. When it is, inferences will in general be more efficient. To make this assumption when imputing <code>x</code> in the <code>ex_linquad</code> data, we define a <code>predictorMatrix</code> which will specify that <code>x</code> be imputed using both <code>z</code> and <code>v</code>, but we omit <code>v</code> from the <code>smformula</code> argument:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">predMatrix &lt;-<span class="st"> </span><span class="kw">array</span>(<span class="dv">0</span>, <span class="dt">dim=</span><span class="kw">c</span>(<span class="kw">ncol</span>(ex_linquad),<span class="kw">ncol</span>(ex_linquad)))
@@ -233,6 +232,10 @@ imps &lt;-<span class="st"> </span><span class="kw">smcfcs</span>(ex_linquad, <s
 ## [1] &quot;Imputation  3&quot;
 ## [1] &quot;Imputation  4&quot;
 ## [1] &quot;Imputation  5&quot;</code></pre>
+<pre><code>## Warning in smcfcs.core(originaldata, smtype, smformula, method,
+## predictorMatrix, : Rejection sampling failed 1 times (across all variables,
+## iterations, and imputations). You may want to increase the rejection
+## sampling limit.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">impobj &lt;-<span class="st"> </span><span class="kw">imputationList</span>(imps$impDatasets)
 models &lt;-<span class="st"> </span><span class="kw">with</span>(impobj, <span class="kw">lm</span>(y~z+x+xsq))
 <span class="kw">summary</span>(<span class="kw">MIcombine</span>(models))</code></pre></div>
@@ -240,10 +243,10 @@ models &lt;-<span class="st"> </span><span class="kw">with</span>(impobj, <span 
 ##       with(impobj, lm(y ~ z + x + xsq))
 ##       MIcombine.default(models)
 ##               results         se    (lower   upper) missInfo
-## (Intercept) 0.9338025 0.04229439 0.8500233 1.017582     20 %
-## z           1.0234987 0.03747970 0.9484144 1.098583     29 %
-## x           1.0003323 0.03169826 0.9381710 1.062494      4 %
-## xsq         1.0412116 0.02324259 0.9951710 1.087252     20 %</code></pre>
+## (Intercept) 0.9421329 0.03841665 0.8668332 1.017433      1 %
+## z           1.0195520 0.04373462 0.9280741 1.111030     51 %
+## x           0.9781125 0.03393572 0.9111742 1.045051     15 %
+## xsq         1.0395246 0.02145356 0.9974630 1.081586      3 %</code></pre>
 </div>
 <div id="rejection-sampling-warnings" class="section level2">
 <h2>Rejection sampling warnings</h2>
@@ -260,13 +263,13 @@ imps &lt;-<span class="st"> </span><span class="kw">smcfcs</span>(ex_linquad, <s
 ## [1] &quot;Fully obs. substantive model variables: z&quot;
 ## [1] &quot;Imputation  1&quot;
 ## [1] &quot;Imputing:  x  using  z,v  plus outcome&quot;</code></pre>
-<pre><code>## Warning in smcfcs(ex_linquad, smtype = &quot;lm&quot;, smformula = &quot;y~z+x+xsq&quot;,
-## method = c(&quot;&quot;, : Rejection sampling failed 4 times (across all variables,
+<pre><code>## Warning in smcfcs.core(originaldata, smtype, smformula, method,
+## predictorMatrix, : Rejection sampling failed 2 times (across all variables,
 ## iterations, and imputations). You may want to increase the rejection
 ## sampling limit.</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot estimates of the fourth parameter of the substantive model against iteration number</span>
 <span class="kw">plot</span>(imps$smCoefIter[<span class="dv">1</span>,<span class="dv">4</span>,])</code></pre></div>
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAGACAMAAAByRC0tAAAAXVBMVEUAAAAAADoAAGYAOjoAOpAAZrY6AAA6ADo6AGY6ZmY6kNtmAABmADpmZmZmtrZmtv+QOgCQZgCQkGaQ2/+2ZgC2/7a2///bkDrb/9vb////tmb/25D//7b//9v///+QNQ0JAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAP5ElEQVR4nO2dDXejuBVAmWmSbcfbJu14hw5J/P9/5ppPC5CEpPfkgHzvOZvNOPhJwOVJgBDVBUBA9dUVgGODQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCAiRqCPUzXx/Ve2KsGRiMpAn294A3PimrDPt+dM9YCDEtkHaqpXfzgohEwC3TkcfBUIBCIQCETkFqh2nI4hUCHcOQPF971AE/0NTxP2SFSXr9uRZQn0mCmwMn7qxtRc8EvCJZReoEFbhwUCqRZenEGbh8VhBAq4mYpA6gSs1WH6QNs3UxFInZC1OsxZ2ObNVPpA6nzNYZGrD7R5MzUunCbtUVjkWVjmw8K+zR6vE11k9unJelg4tlv5Ai226iLRF5mKOpTXzNVAHkegxA2yPHDmG0I/HSVUU2VXL4O41yywOP+Bt/g8JF7ogpnCuTJo7LWz2Qf6/c6qr1NMyA2Jw4JNQYbF3WsWeMzMFxsrcVyBHPVfb43Z9rat9+0r1q0SM8ZuveiwD2PWb0PisP09BRkXd0YNPGbsidpyaBxbIJ8e/S+343Fad8Mb82i1fH9a3GqVbdf2n0WloUlm6+KR+3smkppAsypWtgUD2LlAtsw9SwerdbckC1/Csicb2+as3N9ZYxZpk8i3v6fv3oLcPnCVbwtoluvckKaeq3gBfLFA3p1421z2A8dpxu2v3X+WlDQ3wlL27KOunL4yq9zmXSuLzc5SbN8dN4DfxtnXFp8Y4lTLxYoQ6DLsnNt+H8OY+9164Lgbq+k7t/9uu8TYjtsCDQIuDn7zr9Z1Gv/qL8aaL9ZJZ764s+zZhhwXHOStzE+MtHRZb93ZKgTwJQK5zk2NzbTY9rODz1hvy95Z/nXKHKYE7j27OkYtR3+1XtKydvMqLrtcvm1gSQthZa/rfvtpXX6p5yxSEP2C5n1296324HABC9mShmULTYvOM0BlfL5ed0OTW5K6NUMWXy3fn6oyT3LGdxx7ZVnMTeBF/VfbxEwH7sbZ/Om8qLPIfmsbXas8DxXAKJB5i6vJK9Bq0zgFmunh+pq3T2B4sjZyfgbnO3u3bvzKXKYyj2aj3jdxF+nUVtRqCXuSWi2+CjI5W5kfWOI42a1Ay1R8+3X5h8pc+mJuM/MTd4FGGpqnpHVHNGyv2gpw7XNLazUJZMlcs3VfdgjXi83VXm+im7uz42VVbw+RAqkRIrbbhPmusudnXz9iUdY8rdxSg+3AvfVU1tW1Xy6atNjUY5H9DPHmnbqZ6xvb0jBjnVssNi6+elSBFof0rAmZfeD6siMb+E0yv+/KgFN3aWGQK/CUyaavjUZYq2jJUbak5ZNwGdF6jucXcN2PdIf3Fp6yoEq4W24d/1XN/+L/tqVnOX0QYpDlYtrt65V9ZzhCjT9n3x1MciSs6UR7qYn9F9+hZJznGau0XCNbpdcm+1YwgK/KQO5/BO23gE9Dgxh79LYzZid9vhjD0p6duf5itcgT61/CUrHvkLJ8fx19o4wg7iuQJ+kEHRoqAi3yzGXYo8urTF4blvt88X1v0euf8/UO2Ybr7baNvWzvwsFRDeqq+vYz9Nvx5brPBtzN9+I768MtrOjtSsx35qbK1eyXoHpYi7ss5d2o/byYoP7f8nuHzUDGkvZGwrJm84Rh7WBElewpb9Y580ddnQAE1cNanC1qcIwAbHpuVXX3Ak0thzVA5f3EEi30KLTWYxW9t6iK3zrb9VjvuPi6b+x811Wu+V+OeRa2WM629GrrRB9wcTgbRZveGuU5d296DG/AtO2XKND7i/+pHbVyPWtl28IZBXKfdd8F9bVbBbyLQGozQCsIZF32Trvz/hQi0KWpfrT/S81AN/1iyg227V7pIBTFCuUXKO0AjG7CPk5Pv3M3YRH3sXaNakpUz68a3fSkPtD528+8ApXSFCknDfUjSSVgSie6rn7kFCh3Z/huFLMiPpLOwt5f/oFA2xSzIj7STuM/3zYm35CUW852L6Ut9rHHC4nlbPcDnwCEskeBHmG7F8MuBYLjgEAgAoFARLpAmQeUwTEgA4EIBAIRCAQiEAhEIBCI2PuIRNg5sRlo+zUqyuXCvoluwjZfo6JcLuyb+D7Q1mtUlMuFfUMnGkQgEIiIPgsLm+Lu860/U3O2ds5yGQt0LPII9P7Hz8ulvv717FrCVW45oxEfBMF1IPeloM+37unD8/Xn2XHO5ii3nPHQj0KWPtCQp+qn384khUCFEC/QkF58jBnouW/HIspFoKMRL9C8G2SnboeatR2hj1NcE0Yf6GgkNGEh04s3VTde0ekPZ2GlkJKBuJkKE1xIBBG5BYrsRMPRSBHo2og9/T5vnotZo0RPMAX7JqUT/e1n/fT745RkUHS5sG/SrgO1lwhdjZNyubBv0q4D+a4xd4w3U53LIFAhpGegcztXooO6Gtq3pnI0dAhUCMl9oNozMNG421E7NEOgQkg8C/M/F2/c7Yi8mQpHI8t1IDLQ45DQif6zzz2+TvTUvtEHKp10gbyn8eMNM2dHG4EKIVag8+1aMhcSQZKB7lQu7BvuxoMIBAIRzM4BIshAICL+wUI60WAQLdAPBAKD2Caspg8EJlwHAhF0okHEnQfVx5cL+4ZB9SCCQfUgItOger1yYd/kGVSvWC7smyyD6jXLhX2TZVC9Zrmwb7gOBCIQCESkCPT+kqcJY86OA5LSie6G0+t3opke8Yikz9LqemTQH8U9PxATtB6S9FlatS8kItAhuXMG8pSLQIeEPhCI4CwMRHAdCEQgEIiIFqh/6e77i2xAIgKVQqxAH6f+5Gv8f/ZyYd9ET+8yesOQVmiJFChg8jrlcmHfxD/aPH7AkFa4pDzaPH7AoHq4JPSBpjfIMSYaLvECvb+8Ln7JXC7sm+jrQMPEvbVsjk0EKoWUu/HtcB7Xu1DVy4V9w60MEIFAICJBoHGiTU7jIa0PJLsLFlku7Jv0MdF3Khf2TfqY6DuVC/smoQ/0/sfWaNaAsR4IVAgpAr1sdaI/Tv/aGnCGQIWQ0oRtXkRsb7nW/muNCFQIWTrR/T37xne9GoEKIUsnehr00TgbOgQqhEyd6E3HEKgQUpqwzVcdINDjwL0wEIFAICLpZmp7ku5+o/cM18hpBCqEBIHOT7/fX56N0dExxbknmIJDknYdqKleeawHWtIEOl/l4bEeuKQ1Yc/tzdKPk68J6wdOe071EagQ0kYkfvvpvyM2PbPRuB7eQKBCyHIaH/AEPQIVQhaBAp6gR6BCiBaoe6K5fXez5548GehxiBWobifXbK4/vI82T1O40gcqnejZOZ7HIWXeyRXGO67OZRCoECIFOlcmgtH1CFQIKfMDNd0c0UzvApeE+YG+/+pbMGfvRrlc2DfxZ2F9x4bpXaCD8UAgAoFARO4BZeJyYd/ceUBZfLmwbxhQBiIYUAYiMg0o0ysX9k2eAWWK5cK+4TQeRCAQiEgRqBurIZxpE4EKIUGg/mZ8LXttMwIVQsr8QP1oQ4ZzwCXpOtCfferhQiJcJBmIV17CJa0P1I2Yr32PZSiWC/tGMEOZ6HUZCFQIXAcCEQgEItLuhSW3X0wwVRopZ2G87gkmssxUr1ku7JssM9Vrlgv7JstM9Zrlwr5JEWjzdU+a5cK+SWnCpO+MjyoX9g2daBBBJxpE0IkGEYKbqXSigXthIASBQAQCgYj4ORLpA4EBGQhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIrII1L2S5dLw0t0HIJ9A3eQLztFnCFQI2QQa1OGVl4WTTaDhlZi8dLdwyEAgIpNA7d3658vYnQ4Ix9PyByXXaXw3G7nntYbV+p8YdET2cR2oylEE3AMEAhG5BXK90weBCuHOGcg1wRR9oKOyjyaMs7DDsheB4KBkEujzbePJDQQqhDwC1eP1H+eFIAQqhCwCGRN4cCujcDLdypgGcThvpkIh5BAoIAMlxw4mT46jqnf55vQmFvfNsOTYoTzEXrl71DsJNE0iFDYn+c5W9e5RH6KqOXu9O1vVu0d9iKoiUL6oD1FVBMoX9SGqikD5oj5EVREoX9SHqCoC5Yv6EFXl3gOIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgYhsAjVVOxWVHt1DsT9yRD53I7w1o76/9BO56Va1vm6AV9Wo7//8NYuXEjiXQE07kZnifv58uwar292iHbnpHhHQjNpcA36ctKtad1PDvSpG/Th1T/dN8ZICZxKof4Ts/KwWsJ8dtv7+Szvyx6kVSDNqH0u7qp9vz30wtahNP8fBFC8tcCaBpv2tG/Z6fGhHrp/+exVIM+r7H8NBrFrVSSCtqE31o3u+eIqXFjiXQN1GdD0Ancz5upq6ka/h2j6QZtTm+1+nrrumW9WxCVOM2gs0xksLnEmgvinV7Kp0Ua+7RTdym7ZbgTSj1m3L0CYM5Y0wdHEVo3ayTPHSAh9JoGbsQ+tFbp/xVxfo23Ak61b1mn2vzY3qEbRjgXI0Yf0D+aqRu2DaTVjfi7j2KHSrOnVVHqIJy9CJHma3Uo1cD3OZvGpG7XfBdXeoVnXKD4pRd9yJVj+Nn2YG0Y98Vj6N76dRapRP4/vdqxu12e9pvPrlvrb1zxO5vxKtGbUejVSt6tgHUoza7PdCYtc6aO7lobFpQypHHm5laEZtxrsuqlU9q0cd+jtTvJTA3EwFEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUAEAoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCDQFqvpBrTnXTs2CLQFAnlBoC0QyAsCbXH15eP0n1M/S3w7Acr/hjlm2rlW2vm8Pk4/NoOUCwJt0QnUTpN//a+d5Kmphn+0sz2180jV3fxCjwoCbdEJ9KOfNbObZu48fNDNz9R8/+vPh27REGiLTqDXburDaUq4vhvU+XSuFKdrPCAItIUhUD0JNM7ueunff/LAINAW7gzU8vn2b+33ORwLBNrCEGiYSXn4oKN++v/bI5+EIdAmhkDDC0+Gs7C+N/2q/0qZQ4FAW5gCza8DXcXpJyl/5G40AoEIBAIRCAQiEAhEIBCIQCAQgUAgAoFABAKBCAQCEQgEIhAIRCAQiEAgEIFAIAKBQAQCgQgEAhEIBCIQCEQgEIhAIBCBQCACgUDE34XdW0GexxMQAAAAAElFTkSuQmCC" /></p>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 <p>The plot shows that the process appears to converge rapidly, such that the default choice of <code>numit=10</code> is probably fine here. Of course we should also examine the corresponding plots for the other parameters of the substantive model, since convergence may require more than 10 iterations for some of these.</p>
 <h2 id="references">
 References
@@ -283,7 +286,7 @@ References
   (function () {
     var script = document.createElement("script");
     script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
     document.getElementsByTagName("head")[0].appendChild(script);
   })();
 </script>
