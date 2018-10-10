@@ -5,7 +5,7 @@
 #'
 #' smcfcs imputes missing values of covariates using the Substantive Model Compatible
 #' Fully Conditional Specification multiple imputation approach proposed by
-#' Bartlett \emph{et al} 2014 (see references).
+#' Bartlett \emph{et al} 2015 (see references).
 #'
 #' Currently imputation is supported for linear regression (\code{"lm"}),
 #' logistic regression (\code{"logistic"}), Poisson regression
@@ -83,7 +83,7 @@
 #' \code{smCoefIter} a three dimension matrix containing the substantive model parameter
 #' values. The matrix is indexed by [imputation,parameter number,iteration]
 #'
-#' @author Jonathan Bartlett \email{jwb133@@googlemail.com} \url{http://www.missingdata.org.uk}
+#' @author Jonathan Bartlett \email{j.w.bartlett@@bath.ac.uk} \url{http://www.missingdata.org.uk}
 #' \url{http://thestatsgeek.com}
 #'
 #' @example data-raw/examples.r
@@ -111,7 +111,7 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
 #' for details on how these should be specified.
 #'
 #' @author Ruth Keogh \email{ruth.keogh@@lshtm.ac.uk}
-#' @author Jonathan Bartlett \email{jwb133@@googlemail.com}
+#' @author Jonathan Bartlett \email{j.w.bartlett@@bath.ac.uk}
 #'
 #' @param originaldata The case-cohort data set (NOT a full cohort data set with a case-cohort substudy within it)
 #' @param smformula A formula of the form "Surv(entertime,t,d)~x", where d is the event (d=1) or censoring (d=0) indicator, t is the event or censoring time and entertime is equal to the time origin (typically 0) for individuals in the subcohort and is equal to (t-0.001) for cases outside the subcohort [this sets cases outside the subcohort to enter follow-up just before their event time. The value 0.001 may need to be modified depending on the time scale.]
@@ -138,7 +138,7 @@ smcfcs.casecohort <- function(originaldata,smformula,sampfrac,in.subco,method,pr
 #' for details on how these should be specified.
 #'
 #' @author Ruth Keogh \email{ruth.keogh@@lshtm.ac.uk}
-#' @author Jonathan Bartlett \email{jwb133@@googlemail.com}
+#' @author Jonathan Bartlett \email{j.w.bartlett@@bath.ac.uk}
 #'
 #' @param originaldata The nested case-control data set (NOT a full cohort data set with a case-cohort substudy within it)
 #' @param smformula A formula of the form "Surv(t,case)~x+strata(set)", where case is case-control indicator, t is the event or censoring time. Note that t could be set to the case's event time for the matched controls in a given set. The right hand side should include the case control set as a strata term (see example).
@@ -253,6 +253,17 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
   else {
     outcomeCol <- which(colnames(originaldata)==as.formula(smformula)[[2]])
   }
+
+  if (smtype=="logistic") {
+    if (is.numeric(originaldata[,outcomeCol])==FALSE) {
+      stop("For logistic substantive models the outcome variable must be numeric 0/1.")
+    } else {
+      if (all.equal(unique(originaldata[,outcomeCol]),c(0,1))==FALSE) {
+        stop("For logistic substantive models the outcome variable must be coded 0/1.")
+      }
+    }
+  }
+
   if (smtype=="compet") {
     smcovnames <- attr(terms(as.formula(smformula[[1]])), "term.labels")
     for (cause in 2:numCauses) {
@@ -292,8 +303,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
       if (sum(r[,colnum])<n) {
         #some values are missing
         if ((colnum %in% outcomeCol)==FALSE) {
-          stop(paste("Variable ",colnames(originaldata), " does not have an imputation method specified,
-                     yet appears to have missing values.",sep=""))
+          stop(paste("Variable ",colnames(originaldata)[colnum], " does not have an imputation method specified, yet appears to have missing values.",sep=""))
         }
         }
       }
