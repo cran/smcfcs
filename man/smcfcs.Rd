@@ -5,16 +5,17 @@
 \title{Substantive model compatible fully conditional specification imputation of covariates.}
 \usage{
 smcfcs(originaldata, smtype, smformula, method, predictorMatrix = NULL,
-  m = 5, numit = 10, rjlimit = 1000, noisy = FALSE)
+  m = 5, numit = 10, rjlimit = 1000, noisy = FALSE,
+  errorProneMatrix = NULL)
 }
 \arguments{
 \item{originaldata}{The original data frame with missing values.}
 
 \item{smtype}{A string specifying the type of substantive model. Possible
-values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"coxph"}
- and \code{"compet"}.}
+values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"weibull"},
+\code{"coxph"} and \code{"compet"}.}
 
-\item{smformula}{The formula of the substantive model. For \code{"coxph"} substantive
+\item{smformula}{The formula of the substantive model. For \code{"weibull"} and \code{"coxph"} substantive
 models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
 substantive models, a list should be passed consisting of the Cox models
 for each cause of failure (see example).}
@@ -26,7 +27,9 @@ be used to impute. Possible values are \code{"norm"} (normal linear regression),
 \code{"podds"} (proportional odds regression for ordered categorical variables),
 \code{"mlogit"} (multinomial logistic regression for unordered categorical variables),
 or a custom expression which defines a passively imputed variable, e.g.
-\code{"x^2"} or \code{"x1*x2"}.}
+\code{"x^2"} or \code{"x1*x2"}. \code{"latnorm"} indicates the variable is a latent
+normal variable which is measured with error. If this is specified for a variable,
+the \code{"errorProneMatrix"} argument should also be used.}
 
 \item{predictorMatrix}{An optional predictor matrix. If specified, the matrix defines which
 covariates will be used as predictors in the imputation models
@@ -54,6 +57,12 @@ increase the \code{rjlimit} until the warning does not appear.}
 
 \item{noisy}{logical value (default FALSE) indicating whether output should be noisy, which can
 be useful for debugging or checking that models being used are as desired.}
+
+\item{errorProneMatrix}{An optional matrix which if specified indicates that some variables
+are measured with classical measurement error. If the i'th variable is measured with error
+by variables j and k, then the (i,j) and (i,k) entries of this matrix should be 1, with the
+remainder of entries 0. The i'th element of the method argument should then be specified
+as \code{"latnorm"}. See the measurement error vignette for more details.}
 }
 \value{
 A list containing:
@@ -74,7 +83,8 @@ Bartlett \emph{et al} 2015 (see references).
 
 Currently imputation is supported for linear regression (\code{"lm"}),
 logistic regression (\code{"logistic"}), Poisson regression
-(\code{"poisson"}), Cox regression for time to event data (\code{"coxph"}),
+(\code{"poisson"}), Weibull (\code{"weibull"}) and Cox regression
+for time to event data (\code{"coxph"}),
 and Cox models for competing risks data (\code{"compet"}). For the latter, a
 Cox model is assumed for each cause of failure, and the event indicator
 should be integer coded with 0 corresponding to censoring, 1 corresponding to

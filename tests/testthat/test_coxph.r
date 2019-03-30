@@ -46,4 +46,3 @@ test_that("Cox imputation works with only one covariate", {
     abs(summary(MIcombine(models))[1,1]-1)<0.1
   }, TRUE)
 })
-

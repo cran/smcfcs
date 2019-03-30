@@ -9,7 +9,8 @@
 #'
 #' Currently imputation is supported for linear regression (\code{"lm"}),
 #' logistic regression (\code{"logistic"}), Poisson regression
-#' (\code{"poisson"}), Cox regression for time to event data (\code{"coxph"}),
+#' (\code{"poisson"}), Weibull (\code{"weibull"}) and Cox regression
+#' for time to event data (\code{"coxph"}),
 #' and Cox models for competing risks data (\code{"compet"}). For the latter, a
 #' Cox model is assumed for each cause of failure, and the event indicator
 #' should be integer coded with 0 corresponding to censoring, 1 corresponding to
@@ -39,9 +40,9 @@
 #'
 #' @param originaldata The original data frame with missing values.
 #' @param smtype A string specifying the type of substantive model. Possible
-#' values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"coxph"}
-#'  and \code{"compet"}.
-#' @param smformula The formula of the substantive model. For \code{"coxph"} substantive
+#' values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"weibull"},
+#' \code{"coxph"} and \code{"compet"}.
+#' @param smformula The formula of the substantive model. For \code{"weibull"} and \code{"coxph"} substantive
 #' models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
 #' substantive models, a list should be passed consisting of the Cox models
 #' for each cause of failure (see example).
@@ -52,7 +53,9 @@
 #' \code{"podds"} (proportional odds regression for ordered categorical variables),
 #' \code{"mlogit"} (multinomial logistic regression for unordered categorical variables),
 #' or a custom expression which defines a passively imputed variable, e.g.
-#' \code{"x^2"} or \code{"x1*x2"}.
+#' \code{"x^2"} or \code{"x1*x2"}. \code{"latnorm"} indicates the variable is a latent
+#' normal variable which is measured with error. If this is specified for a variable,
+#' the \code{"errorProneMatrix"} argument should also be used.
 #' @param predictorMatrix An optional predictor matrix. If specified, the matrix defines which
 #' covariates will be used as predictors in the imputation models
 #' (the outcome must not be included). The i'th row of the matrix should consist of
@@ -75,6 +78,11 @@
 #' increase the \code{rjlimit} until the warning does not appear.
 #' @param noisy logical value (default FALSE) indicating whether output should be noisy, which can
 #' be useful for debugging or checking that models being used are as desired.
+#' @param errorProneMatrix An optional matrix which if specified indicates that some variables
+#' are measured with classical measurement error. If the i'th variable is measured with error
+#' by variables j and k, then the (i,j) and (i,k) entries of this matrix should be 1, with the
+#' remainder of entries 0. The i'th element of the method argument should then be specified
+#' as \code{"latnorm"}. See the measurement error vignette for more details.
 #'
 #' @return A list containing:
 #'
@@ -95,9 +103,9 @@
 #' @import stats
 
 #' @export
-smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE) {
+smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE,errorProneMatrix=NULL) {
   #call core  smcfcs function, passing through arguments
-  smcfcs.core(originaldata,smtype,smformula,method,predictorMatrix,m,numit,rjlimit,noisy)
+  smcfcs.core(originaldata,smtype,smformula,method,predictorMatrix,m,numit,rjlimit,noisy,errorProneMatrix=errorProneMatrix)
 }
 
 #' Substantive model compatible fully conditional specification imputation of covariates for case cohort studies
@@ -123,8 +131,10 @@ smcfcs <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5
 #' @example data-raw/cc_example.r
 #'
 #' @export
-smcfcs.casecohort <- function(originaldata,smformula,sampfrac,in.subco,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE) {
-  smcfcs.core(originaldata,smtype="casecohort",smformula,method,predictorMatrix,m,numit,rjlimit,noisy,sampfrac=sampfrac,in.subco=in.subco)
+smcfcs.casecohort <- function(originaldata,smformula,sampfrac,in.subco,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE,
+                              errorProneMatrix=NULL) {
+  smcfcs.core(originaldata,smtype="casecohort",smformula,method,predictorMatrix,m,numit,rjlimit,noisy,sampfrac=sampfrac,in.subco=in.subco,
+              errorProneMatrix=errorProneMatrix)
 }
 
 #' Substantive model compatible fully conditional specification imputation of covariates for nested case control
@@ -149,12 +159,13 @@ smcfcs.casecohort <- function(originaldata,smformula,sampfrac,in.subco,method,pr
 #' @inheritParams smcfcs
 #' @example data-raw/ncc_example.r
 #' @export
-smcfcs.nestedcc <- function(originaldata,smformula,set,event,nrisk,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE) {
-  smcfcs.core(originaldata,smtype="nestedcc",smformula,method,predictorMatrix,m,numit,rjlimit,noisy,set=set,event=event,nrisk=nrisk)
+smcfcs.nestedcc <- function(originaldata,smformula,set,event,nrisk,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE,errorProneMatrix=NULL) {
+  smcfcs.core(originaldata,smtype="nestedcc",smformula,method,predictorMatrix,m,numit,rjlimit,noisy,set=set,event=event,nrisk=nrisk,
+              errorProneMatrix=errorProneMatrix)
 }
 
 #this is the core of the smcfcs function, called by wrapper functions for certain different substantive models
-smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE,
+smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NULL,m=5,numit=10,rjlimit=1000,noisy=FALSE,errorProneMatrix=NULL,
                         ...) {
   #get extra arguments passed in ...
   extraArgs <- list(...)
@@ -167,7 +178,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
   #create matrix of response indicators
   r <- 1*(is.na(originaldata)==0)
 
-  if ((smtype %in% c("lm", "logistic", "poisson", "coxph", "compet", "casecohort","nestedcc"))==FALSE) #RUTH 21/03/2017: ADDED 'nestedcc' OPTION HERE
+  if ((smtype %in% c("lm", "logistic", "poisson", "coxph", "compet", "casecohort","nestedcc", "weibull"))==FALSE)
     stop(paste("Substantive model type ",smtype," not recognised.",sep=""))
 
   #find column numbers of partially observed, fully observed variables, and outcome
@@ -182,6 +193,11 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
     basehaz <- survival::basehaz(nullMod)
     H0indices <- match(originaldata[,timeCol], basehaz[,2])
     rm(nullMod)
+  } else if (smtype=="weibull") {
+    timeCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula)[[2]][[2]])]
+    dCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula)[[2]][[3]])]
+    outcomeCol <- c(timeCol, dCol)
+    d <- originaldata[,dCol]
   } else if (smtype=="compet") {
 
     timeCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula[[1]])[[2]][[2]])]
@@ -279,7 +295,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
   smcovcols <- (1:ncol(originaldata))[colnames(originaldata) %in% smcovnames]
 
   #partial vars are those variables for which an imputation method has been specified among the available regression types
-  partialVars <- which((method=="norm") | (method=="logreg") | (method=="poisson") | (method=="podds") | (method=="mlogit"))
+  partialVars <- which((method=="norm") | (method=="latnorm") | (method=="logreg") | (method=="poisson") | (method=="podds") | (method=="mlogit"))
 
   if (length(partialVars)==0) stop("You have not specified any valid imputation methods in the method argument.")
 
@@ -302,13 +318,47 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
       #no imputation method has been specified
       if (sum(r[,colnum])<n) {
         #some values are missing
-        if ((colnum %in% outcomeCol)==FALSE) {
+        if (((colnum %in% outcomeCol)==FALSE) & (sum(errorProneMatrix[,colnum])==0)) {
           stop(paste("Variable ",colnames(originaldata)[colnum], " does not have an imputation method specified, yet appears to have missing values.",sep=""))
         }
         }
       }
 
+  }
+
+  #check that if any variables have latnorm specified as method, that at least two error-prone measures
+  #are specified for it in errorProneMatrix
+  if ("latnorm" %in% method) {
+    if (is.null(errorProneMatrix)==TRUE) {
+      stop("If you specify method latnorm you must specify the errorProneMatrix argument.")
+    } else {
+      #check errorProneMatrix is of correct dimensional
+      if (identical(dim(errorProneMatrix), c(length(originaldata),length(originaldata)))==FALSE) {
+        stop("The errorProneMatrix should be a square matrix with number of rows equal to the number of variables in the dataset.")
+      }
+      #check entries of errorProneMatrix only consists of 0s and 1s
+      if (identical(sort(unique(as.vector(errorProneMatrix))),c(0,1))==FALSE) {
+        stop("The errorProneMatrix should only consist of 0s and 1s.")
+      }
+      #check each latnorm variable has at least 2 error-prones
+      for (varNum in 1:length(method)) {
+        if (method[varNum]=="latnorm") {
+          if (sum(errorProneMatrix[varNum,])<2) {
+            stop("Each latnorm variable must have two or more error prone measurements specified in the errorProneMatrix argument.")
+          }
+        }
+      }
+      #check no error-prone measurement is allocated to more than one latnorm
+      if (sum(colSums(errorProneMatrix)>1)>0) {
+        stop("Each error-prone measurement should be allocated to exactly one latnorm variable.")
+      }
     }
+  }
+  if (is.null(errorProneMatrix)==FALSE) {
+    if (("latnorm" %in% method)==FALSE) {
+      stop("If you specify errorProneMatrix then at least one variable must be imputed using latnorm.")
+    }
+  }
 
   #fully observed vars are those that are fully observed and are covariates in the substantive model
   fullObsVars <- which((colSums(r)==n) & (colnames(originaldata) %in% smcovnames))
@@ -335,14 +385,22 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
     #initial imputation of each partially observed variable based on observed values
     for (var in 1:length(partialVars)) {
       targetCol <- partialVars[var]
-      #if (method[targetCol]=="latnorm") {
-      #initialize latent predictors with single error prone measurement
-      #errorProneCols <- which(errorProneMatrix[targetCol,]==1)
-      #imputations[[imp]][,targetCol] <- apply(imputations[[imp]][,errorProneCols], 1, firstnonna)
-      #}
-      #else {
-      imputations[[imp]][r[,targetCol]==0,targetCol] <- sample(imputations[[imp]][r[,targetCol]==1,targetCol], size=sum(r[,targetCol]==0), replace=TRUE)
-      #}
+      if (method[targetCol]=="latnorm") {
+        #first impute any missing replicate error-prone measurements of this variable by a randomly chosen observed value
+        errorProneCols <- which(errorProneMatrix[targetCol,]==1)
+        for (measure in 1:length(errorProneCols)) {
+          if (sum(r[,errorProneCols[measure]])<n) {
+            imputations[[imp]][r[,errorProneCols[measure]]==0,errorProneCols[measure]] <- sample(imputations[[imp]][r[,errorProneCols[measure]]==1,
+                errorProneCols[measure]], size=sum(r[,errorProneCols[measure]]==0), replace=TRUE)
+          }
+        }
+
+        #initialize latent predictors with mean of their error-prone measurements
+        imputations[[imp]][,targetCol] <- apply(imputations[[imp]][,errorProneCols], 1, mean)
+      }
+      else {
+        imputations[[imp]][r[,targetCol]==0,targetCol] <- sample(imputations[[imp]][r[,targetCol]==1,targetCol], size=sum(r[,targetCol]==0), replace=TRUE)
+      }
     }
 
     #initial imputations of missing outcomes, if present (using improper imputation)
@@ -402,12 +460,12 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           predictorCols <- predictorCols[! predictorCols %in% outcomeCol]
         }
         if ((imp==1) & (cyclenum==1)) {
-          #if (method[targetCol]=="latnorm") {
-          #print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[c(predictorCols,which(errorProneMatrix[targetCol,]==1))],collapse=',')," plus outcome",collapse=','))
-          #}
-          #else {
-          print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[predictorCols],collapse=',')," plus outcome",collapse=','))
-          #}
+          if (method[targetCol]=="latnorm") {
+            print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[c(predictorCols,which(errorProneMatrix[targetCol,]==1))],collapse=',')," plus outcome",collapse=','))
+          }
+          else {
+            print(paste("Imputing: ",colnames(imputations[[imp]])[targetCol]," using ",paste(colnames(imputations[[imp]])[predictorCols],collapse=',')," plus outcome",collapse=','))
+          }
         }
         if (length(predictorCols)>0) {
           xmodformula <- as.formula(paste(colnames(imputations[[imp]])[targetCol], "~", paste(colnames(imputations[[imp]])[predictorCols], collapse="+"),sep=""))
@@ -422,7 +480,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
         } else {
           xmoddata <- imputations[[imp]]
         }
-        if ((method[targetCol]=="norm") | (method[targetCol]=="latnorm")) {
+        if (method[targetCol]=="norm") {
           #estimate parameters of covariate model
           xmod <- lm(xmodformula, data=xmoddata)
           #take draw from posterior of covariate model parameters
@@ -437,6 +495,49 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           } else {
             xfitted <- model.matrix(xmod) %*% newbeta
           }
+        } else if  (method[targetCol]=="latnorm") {
+            #estimate parameters of covariate model
+            xmod <- lm(xmodformula, data=xmoddata)
+            #take draw from posterior of covariate model parameters
+            beta <- xmod$coef
+            sigmasq <- summary(xmod)$sigma^2
+            #draw from sigmasq posterior based on proper inverse gamma prior for sigmasq
+            #prior equivalent to 1 observation and guess of sigmasq=1
+            newsigmasq <- 1/rgamma(1,shape=((n+1)/2), rate=((n*sigmasq+1)/2))
+            covariance <- (newsigmasq/sigmasq)*vcov(xmod)
+            newbeta = beta + MASS::mvrnorm(1, mu=rep(0,ncol(covariance)), Sigma=covariance)
+            #calculate fitted values
+            if ((smtype=="casecohort")|(smtype=="nestedcc")) {
+              xfitted <- model.matrix(xmodformula, data=imputations[[imp]]) %*% newbeta
+            } else {
+              xfitted <- model.matrix(xmod) %*% newbeta
+            }
+
+            #estimate error variance and draw new value of error variance
+            errorProneCols <- which(errorProneMatrix[targetCol,]==1)
+            xmat <- matrix(imputations[[imp]][,targetCol], nrow=nrow(imputations[[imp]]), ncol=length(errorProneCols))
+            uVec <- c(as.matrix(imputations[[imp]][,errorProneCols] - xmat))
+            sigmausq <- mean(uVec^2)
+            #take draw from posterior of error variance, using proper inverse gamma prior
+            sum_ni <- n*length(errorProneCols)
+            sigmausq <- 1/rgamma(1,shape=((sum_ni+1)/2), rate=((sum_ni*sigmausq+1)/2))
+
+            #re-impute any originally missing error-prone measurements, based on classical error model assumption
+            for (measure in 1:length(errorProneCols)) {
+              nToImpute <- n-sum(r[,errorProneCols[measure]])
+              if (nToImpute>0) {
+                #then some values need imputing
+                imputations[[imp]][r[,errorProneCols[measure]]==0,errorProneCols[measure]] <- imputations[[imp]][r[,errorProneCols[measure]]==0,targetCol] +
+                  rnorm(nToImpute, 0, sd=sqrt(sigmausq))
+              }
+            }
+
+            #calculate conditional mean and variance of X|everything else except outcome
+            wmean <- rowMeans(imputations[[imp]][,errorProneCols])
+            lambda <- newsigmasq/(newsigmasq+sigmausq/length(errorProneCols))
+            xfitted <- xfitted + lambda * (wmean - xfitted)
+            newsigmasq <- rep(newsigmasq*(1-lambda), n)
+
         } else if (method[targetCol]=="logreg") {
           xmod <- glm(xmodformula, family="binomial",data=xmoddata)
           newbeta = modPostDraw(xmod)
@@ -474,31 +575,6 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           print(summary(xmod))
         }
 
-        #if latent normal, estimate error variance and calculate required conditional expectation and variance
-        #         if (method[targetCol]=="latnorm") {
-        #           errorProneCols <- which(errorProneMatrix[targetCol,]==1)
-        #           wmean <- rowMeans(imputations[[imp]][,errorProneCols], na.rm=TRUE)
-        #           n_i <- apply(imputations[[imp]][,errorProneCols], 1, sumna)
-        #           sum_ni <- sum(n_i)
-        #           #estimate error variance
-        #           if (cyclenum==1) {
-        #             xmat <- matrix(wmean, nrow=nrow(imputations[[imp]]), ncol=length(errorProneCols))
-        #             uVec <- c(as.matrix(imputations[[imp]][,errorProneCols] - xmat))
-        #             sigmausq <- sum(uVec^2, na.rm=TRUE) / (sum_ni - n)
-        #           }
-        #           else {
-        #             xmat <- matrix(imputations[[imp]][,targetCol], nrow=nrow(imputations[[imp]]), ncol=length(errorProneCols))
-        #             uVec <- c(as.matrix(imputations[[imp]][,errorProneCols] - xmat))
-        #             sigmausq <- sum(uVec^2, na.rm=TRUE) / sum_ni
-        #           }
-        #           #take draw from posterior of error variance
-        #           sigmausq <- sigmausq*sum_ni/rchisq(1,sum_ni)
-        #           #calculate conditional mean and variance
-        #           lambda <- newsigmasq/(newsigmasq+sigmausq/n_i)
-        #           xfitted <- xfitted + lambda * (wmean - xfitted)
-        #           newsigmasq <- newsigmasq*(1-lambda)
-        #         }
-
         #estimate parameters of substantive model
         if (smtype=="lm") {
           ymod <- lm(as.formula(smformula),imputations[[imp]])
@@ -532,6 +608,16 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           ymod$coefficients <- outcomeModBeta
           basehaz <- survival::basehaz(ymod, centered=FALSE)[,1]
           H0 <- basehaz[H0indices]
+          if (noisy==TRUE) {
+            print(summary(ymod))
+          }
+        }
+        else if (smtype=="weibull") {
+          ymod <- survival::survreg(as.formula(smformula), data=imputations[[imp]], dist="weibull")
+          outcomeModBeta <-  c(coef(ymod), log(ymod$scale)) +
+            MASS::mvrnorm(1, mu=rep(0,ncol(vcov(ymod))), Sigma=vcov(ymod))
+          weibullScale <- exp(utils::tail(outcomeModBeta,1))
+          outcomeModBeta <- utils::head(outcomeModBeta, -1)
           if (noisy==TRUE) {
             print(summary(ymod))
           }
@@ -651,6 +737,12 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
               outcomeDens <- dpois(imputations[[imp]][imputationNeeded,outcomeCol], exp(outmodxb[imputationNeeded]))
             }
+            else if (smtype=="weibull") {
+              outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
+              #weibull survival function
+              outcomeDens <- (1-d[imputationNeeded])*(1-survival::psurvreg(imputations[[imp]][imputationNeeded,timeCol], mean=outmodxb[imputationNeeded], scale=weibullScale))+
+                d[imputationNeeded]*(survival::dsurvreg(imputations[[imp]][imputationNeeded,timeCol], mean=outmodxb[imputationNeeded], scale=weibullScale))
+            }
             else if ((smtype=="coxph") | (smtype=="casecohort")) {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]])
               outmodxb <- as.matrix(outmodxb[,2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
@@ -725,8 +817,13 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
               prob = dpois(imputations[[imp]][imputationNeeded,outcomeCol], exp(outmodxb[imputationNeeded]))
               reject = 1*(uDraw>prob)
-            }
-            else if ((smtype=="coxph") | (smtype=="casecohort")) {
+            } else if (smtype=="weibull") {
+              outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
+              s_t <- 1-survival::psurvreg(imputations[[imp]][imputationNeeded,timeCol], mean=outmodxb[imputationNeeded], scale=weibullScale)
+              prob <- -exp(1)*log(s_t)*s_t
+              prob <- d[imputationNeeded]*prob + (1-d[imputationNeeded])*s_t
+              reject <- 1*(uDraw>prob)
+            } else if ((smtype=="coxph") | (smtype=="casecohort")) {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]])
               outmodxb <- as.matrix(outmodxb[,2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
               s_t = exp(-H0[imputationNeeded]* exp(outmodxb[imputationNeeded]))
@@ -795,6 +892,18 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               prob = dpois(tempData[,outcomeCol], exp(outmodxb))
               reject = 1*(uDraw>prob)
             }
+            else if (smtype=="weibull") {
+              outmodxb <-  model.matrix(as.formula(smformula),tempData) %*% outcomeModBeta
+              s_t <- 1-survival::psurvreg(tempData[,timeCol], mean=outmodxb, scale=weibullScale)
+              if (d[i]==1) {
+                prob <- -exp(1)*log(s_t)*s_t
+                #the following line fixes a numerical error which occurs if s_t=0 for any draws
+                prob[is.na(prob)] <- 0
+              } else {
+                prob <- s_t
+              }
+              reject = 1*(uDraw>prob)
+            }
             else if ((smtype=="coxph") | (smtype=="casecohort")) {
               outmodxb <-  model.matrix(as.formula(smformula),tempData)
               outmodxb <- as.matrix(outmodxb[,2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
@@ -820,7 +929,6 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               }
               reject = 1*(uDraw > prob )
             }
-
             if (sum(reject)<rjlimit) {
               imputations[[imp]][i,targetCol] <- tempData[reject==0,targetCol][1]
             } else {
