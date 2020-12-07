@@ -4,9 +4,18 @@
 \alias{smcfcs}
 \title{Substantive model compatible fully conditional specification imputation of covariates.}
 \usage{
-smcfcs(originaldata, smtype, smformula, method, predictorMatrix = NULL,
-  m = 5, numit = 10, rjlimit = 1000, noisy = FALSE,
-  errorProneMatrix = NULL)
+smcfcs(
+  originaldata,
+  smtype,
+  smformula,
+  method,
+  predictorMatrix = NULL,
+  m = 5,
+  numit = 10,
+  rjlimit = 1000,
+  noisy = FALSE,
+  errorProneMatrix = NULL
+)
 }
 \arguments{
 \item{originaldata}{The original data frame with missing values.}
@@ -103,6 +112,7 @@ If the substantive model is linear, logistic or Poisson regression,
 the specified substantive model. However, even in this case, the user should
 specify "" in the element of method corresponding to the outcome variable.
 
+
 The development of this package was supported by a UK Medical Research Council
 Fellowship (MR/K02180X/1). Part of its development took place while the author was
 kindly hosted by the University of Michigan's Department of Biostatistics & Institute for
@@ -185,7 +195,7 @@ if (requireNamespace("mitools", quietly = TRUE)) {
 \references{
 Bartlett JW, Seaman SR, White IR, Carpenter JR. Multiple imputation of covariates
 by fully conditional specification: accommodating the substantive model. Statistical Methods
-in Medical Research 2015; 24(4): 462-487. \url{http://doi.org/10.1177/0962280214521348}
+in Medical Research 2015; 24(4): 462-487. \url{https://doi.org/10.1177/0962280214521348}
 }
 \author{
 Jonathan Bartlett \email{j.w.bartlett@bath.ac.uk} \url{http://www.missingdata.org.uk}
