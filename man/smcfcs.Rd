@@ -22,10 +22,10 @@ smcfcs(
 
 \item{smtype}{A string specifying the type of substantive model. Possible
 values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"weibull"},
-\code{"coxph"} and \code{"compet"}.}
+\code{"coxph"}, \code{"compet"}.}
 
-\item{smformula}{The formula of the substantive model. For \code{"weibull"} and \code{"coxph"} substantive
-models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
+\item{smformula}{The formula of the substantive model. For \code{"weibull"} and \code{"coxph"}
+substantive models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
 substantive models, a list should be passed consisting of the Cox models
 for each cause of failure (see example).}
 
@@ -90,7 +90,7 @@ smcfcs imputes missing values of covariates using the Substantive Model Compatib
 Fully Conditional Specification multiple imputation approach proposed by
 Bartlett \emph{et al} 2015 (see references).
 
-Currently imputation is supported for linear regression (\code{"lm"}),
+Imputation is supported for linear regression (\code{"lm"}),
 logistic regression (\code{"logistic"}), Poisson regression
 (\code{"poisson"}), Weibull (\code{"weibull"}) and Cox regression
 for time to event data (\code{"coxph"}),
@@ -190,14 +190,31 @@ if (requireNamespace("mitools", quietly = TRUE)) {
     summary(MIcombine(models))
   }
 
+  #discrete time survival analysis example
+  M <- 5
+  imps <- smcfcs(ex_dtsam, "dtsam", "Surv(failtime,d)~x1+x2",
+                 method=c("logreg","", "", ""),m=M)
+  #fit dtsam model to each dataset manually, since we need
+  #to expand to person-period data form first
+  ests <- vector(mode = "list", length = M)
+  vars <- vector(mode = "list", length = M)
+  for (i in 1:M) {
+    longData <- survSplit(Surv(failtime,d)~x1+x2, data=imps$impDatasets[[i]],
+                          cut=unique(ex_dtsam$failtime[ex_dtsam$d==1]))
+    mod <- glm(d~-1+factor(tstart)+x1+x2, family="binomial", data=longData)
+    ests[[i]] <- coef(mod)
+    vars[[i]] <- diag(vcov(mod))
+  }
+  summary(MIcombine(ests,vars))
+
 }
 }
 \references{
 Bartlett JW, Seaman SR, White IR, Carpenter JR. Multiple imputation of covariates
 by fully conditional specification: accommodating the substantive model. Statistical Methods
-in Medical Research 2015; 24(4): 462-487. \url{https://doi.org/10.1177/0962280214521348}
+in Medical Research 2015; 24(4): 462-487. \doi{10.1177/0962280214521348}
 }
 \author{
-Jonathan Bartlett \email{j.w.bartlett@bath.ac.uk} \url{http://www.missingdata.org.uk}
-\url{http://thestatsgeek.com}
+Jonathan Bartlett \email{j.w.bartlett@bath.ac.uk} \url{https://thestatsgeek.com}
+\url{http://www.missingdata.org.uk}
 }
