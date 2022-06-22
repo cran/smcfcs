@@ -8,8 +8,8 @@
 #' Bartlett \emph{et al} 2015 (see references).
 #'
 #' Imputation is supported for linear regression (\code{"lm"}),
-#' logistic regression (\code{"logistic"}), Poisson regression
-#' (\code{"poisson"}), Weibull (\code{"weibull"}) and Cox regression
+#' logistic regression (\code{"logistic"}), bias reduced logistic regression (\code{"brlogistic"}),
+#' Poisson regression (\code{"poisson"}), Weibull (\code{"weibull"}) and Cox regression
 #' for time to event data (\code{"coxph"}),
 #' and Cox models for competing risks data (\code{"compet"}). For \code{"coxph"},
 #' the event indicator should be integer coded with 0 for censoring and 1 for event.
@@ -31,9 +31,13 @@
 #' the specified substantive model. However, even in this case, the user should
 #' specify "" in the element of method corresponding to the outcome variable.
 #'
+#' The bias reduced methods make use of the \code{\link[brglm2]{brglm2}} package to fit the corresponding glms
+#' using Firth's bias reduced approach. These may be particularly useful to use in case
+#' of perfect prediction, since the resulting model estimates are always guaranteed to be
+#' finite, even in the case of perfect prediction.
 #'
-#' The development of this package was supported by a UK Medical Research Council
-#' Fellowship (MR/K02180X/1). Part of its development took place while the author was
+#' The development of this package was supported by the UK Medical Research Council
+#' (Fellowship MR/K02180X/1 and grant MR/T023953/1). Part of its development took place while Bartlett was
 #' kindly hosted by the University of Michigan's Department of Biostatistics & Institute for
 #' Social Research.
 #'
@@ -42,7 +46,7 @@
 #'
 #' @param originaldata The original data frame with missing values.
 #' @param smtype A string specifying the type of substantive model. Possible
-#' values are \code{"lm"}, \code{"logistic"}, \code{"poisson"}, \code{"weibull"},
+#' values are \code{"lm"}, \code{"logistic"}, \code{"brlogistic"}, \code{"poisson"}, \code{"weibull"},
 #' \code{"coxph"}, \code{"compet"}.
 #' @param smformula The formula of the substantive model. For \code{"weibull"} and \code{"coxph"}
 #' substantive models the left hand side should be of the form \code{"Surv(t,d)"}. For \code{"compet"}
@@ -51,7 +55,8 @@
 #' @param method A required vector of strings specifying for each variable either
 #' that it does not need to be imputed (""), the type of regression model to be
 #' be used to impute. Possible values are \code{"norm"} (normal linear regression),
-#' \code{"logreg"} (logistic regression), \code{"poisson"} (Poisson regression),
+#' \code{"logreg"} (logistic regression), \code{"brlogreg"} (bias reduced logistic regression),
+#' \code{"poisson"} (Poisson regression),
 #' \code{"podds"} (proportional odds regression for ordered categorical variables),
 #' \code{"mlogit"} (multinomial logistic regression for unordered categorical variables),
 #' or a custom expression which defines a passively imputed variable, e.g.
@@ -213,7 +218,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
   #create matrix of response indicators
   r <- 1*(is.na(originaldata)==0)
 
-  if ((smtype %in% c("lm", "logistic", "poisson", "coxph", "compet", "casecohort","nestedcc",
+  if ((smtype %in% c("lm", "logistic", "brlogistic", "poisson", "coxph", "compet", "casecohort","nestedcc",
                      "weibull","dtsam"))==FALSE)
     stop(paste("Substantive model type ",smtype," not recognised.",sep=""))
 
@@ -337,11 +342,11 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
     outcomeCol <- which(colnames(originaldata)==as.formula(smformula)[[2]])
   }
 
-  if (smtype=="logistic") {
+  if ((smtype=="logistic") | (smtype=="brlogistic")) {
     if (is.numeric(originaldata[,outcomeCol])==FALSE) {
       stop("For logistic substantive models the outcome variable must be numeric 0/1.")
     } else {
-      if (all.equal(unique(originaldata[,outcomeCol]),c(0,1))==FALSE) {
+      if (all.equal(sort(unique(originaldata[,outcomeCol])),c(0,1))==FALSE) {
         stop("For logistic substantive models the outcome variable must be coded 0/1.")
       }
     }
@@ -362,7 +367,8 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
   smcovcols <- (1:ncol(originaldata))[colnames(originaldata) %in% smcovnames]
 
   #partial vars are those variables for which an imputation method has been specified among the available regression types
-  partialVars <- which((method=="norm") | (method=="latnorm") | (method=="logreg") | (method=="poisson") | (method=="podds") | (method=="mlogit"))
+  partialVars <- which((method=="norm") | (method=="latnorm") | (method=="logreg") | (method=="poisson") |
+                         (method=="podds") | (method=="mlogit") | (method=="brlogreg"))
 
   if (length(partialVars)==0) stop("You have not specified any valid imputation methods in the method argument.")
 
@@ -431,7 +437,8 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
   fullObsVars <- which((colSums(r)==n) & (colnames(originaldata) %in% smcovnames))
 
   #passive variables
-  passiveVars <- which((method!="") & (method!="norm") & (method!="logreg") & (method!="poisson") & (method!="podds") & (method!="mlogit") & (method!="latnorm"))
+  passiveVars <- which((method!="") & (method!="norm") & (method!="logreg") & (method!="poisson") & (method!="podds") &
+                         (method!="mlogit") & (method!="latnorm") & (method!="brlogreg"))
 
   print(paste("Outcome variable(s):", paste(colnames(originaldata)[outcomeCol],collapse=',')))
   print(paste("Passive variables:", paste(colnames(originaldata)[passiveVars],collapse=',')))
@@ -471,7 +478,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
     }
 
     #initial imputations of missing outcomes, if present (using improper imputation)
-    if ((smtype=="lm") | (smtype=="logistic") | (smtype=="poisson")) {
+    if ((smtype=="lm") | (smtype=="logistic") | (smtype=="brlogistic") | (smtype=="poisson")) {
       if (sum(r[,outcomeCol])<n) {
         if (imp==1) {
           print("Imputing missing outcomes using specified substantive model.")
@@ -490,8 +497,13 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% beta
           imputations[[imp]][imputationNeeded,outcomeCol] <- rnorm(length(imputationNeeded),outmodxb[imputationNeeded], sigmasq^0.5)
         }
-        else if (smtype=="logistic") {
-          ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]])
+        else if ((smtype=="logistic") | (smtype=="brlogistic")) {
+          if (smtype=="logistic") {
+            ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]])
+          } else {
+            ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]],
+                        method = brglm2::brglmFit)
+          }
           beta <- ymod$coef
           imputations[[imp]][imputationNeeded,outcomeCol] <- 0
           outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% beta
@@ -613,6 +625,14 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           } else {
             xfitted <- expit(model.matrix(xmod) %*% newbeta)
           }
+        } else if (method[targetCol]=="brlogreg") {
+          xmod <- glm(xmodformula, family="binomial",data=xmoddata,method = brglm2::brglmFit)
+          newbeta = modPostDraw(xmod)
+          if ((smtype=="casecohort")|(smtype=="nestedcc")) {
+            xfitted <- expit(model.matrix(xmodformula, data=imputations[[imp]]) %*% newbeta)
+          } else {
+            xfitted <- expit(model.matrix(xmod) %*% newbeta)
+          }
         } else if (method[targetCol]=="poisson") {
           xmod <- glm(xmodformula, family="poisson", data=xmoddata)
           newbeta = modPostDraw(xmod)
@@ -655,8 +675,13 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
             print(summary(ymod))
           }
         }
-        else if (smtype=="logistic") {
-          ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]])
+        else if ((smtype=="logistic") | (smtype=="brlogistic")) {
+          if (smtype=="logistic") {
+            ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]])
+          } else {
+            ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]],
+                        method = brglm2::brglmFit)
+          }
           outcomeModBeta = modPostDraw(ymod)
           if (noisy==TRUE) {
             print(summary(ymod))
@@ -786,9 +811,10 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
         #impute x, either directly where possibly, or using rejection sampling otherwise
         imputationNeeded <- (1:n)[r[,targetCol]==0]
 
-        if ((method[targetCol]=="logreg") | (method[targetCol]=="podds") | (method[targetCol]=="mlogit")) {
+        if ((method[targetCol]=="logreg") | (method[targetCol]=="podds") | (method[targetCol]=="mlogit") |
+            (method[targetCol]=="brlogreg")) {
           #directly sample
-          if (method[targetCol]=="logreg") {
+          if ((method[targetCol]=="logreg") | (method[targetCol]=="brlogreg")) {
             numberOutcomes <- 2
             fittedMean <- cbind(1-xfitted, xfitted)
           }
@@ -800,7 +826,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           outcomeDensCovDens = array(dim=c(length(imputationNeeded),numberOutcomes),0)
 
           for (xMisVal in 1:numberOutcomes) {
-            if (method[targetCol]=="logreg") {
+            if ((method[targetCol]=="logreg") | (method[targetCol]=="brlogreg")) {
               if (is.factor(imputations[[imp]][,targetCol])==TRUE) {
                 valToImpute <- levels(imputations[[imp]][,targetCol])[xMisVal]
               }
@@ -821,7 +847,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               deviation <- imputations[[imp]][imputationNeeded,outcomeCol] - outmodxb[imputationNeeded]
               outcomeDens <- dnorm(deviation, mean=0, sd=outcomeModResVar^0.5)
             }
-            else if (smtype=="logistic") {
+            else if ((smtype=="logistic") | (smtype=="brlogistic")) {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
               prob <- expit(outmodxb[imputationNeeded])
               outcomeDens <- prob*imputations[[imp]][imputationNeeded,outcomeCol] + (1-prob)*(1-imputations[[imp]][imputationNeeded,outcomeCol])
@@ -862,7 +888,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
           }
           directImpProbs = outcomeDensCovDens / rowSums(outcomeDensCovDens)
 
-          if (method[targetCol]=="logreg") {
+          if ((method[targetCol]=="logreg") | (method[targetCol]=="brlogreg")) {
             directImpProbs = directImpProbs[,2]
             if (is.factor(imputations[[imp]][,targetCol])==TRUE) {
               imputations[[imp]][imputationNeeded,targetCol] <- levels(imputations[[imp]][,targetCol])[1]
@@ -904,7 +930,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               deviation <- imputations[[imp]][imputationNeeded,outcomeCol] - outmodxb[imputationNeeded]
               reject = 1*(log(uDraw) > -(deviation^2) / (2*array(outcomeModResVar,dim=c(length(imputationNeeded),1))))
             }
-            else if (smtype=="logistic") {
+            else if ((smtype=="logistic") | (smtype=="brlogistic")) {
               outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
               prob = expit(outmodxb[imputationNeeded])
               prob = prob*imputations[[imp]][imputationNeeded,outcomeCol] + (1-prob)*(1-imputations[[imp]][imputationNeeded,outcomeCol])
@@ -963,7 +989,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
             if (method[targetCol]=="norm") {
               tempData[,targetCol] <- rnorm(rjlimit,xfitted[i],newsigmasq^0.5)
             }
-            else if (method[targetCol]=="logreg") {
+            else if ((method[targetCol]=="logreg") | (method[targetCol]=="brlogreg")) {
               tempData[,targetCol] <- rbinom(rjlimit,size=1,xfitted[i])
             }
             else if (method[targetCol]=="poisson") {
@@ -983,7 +1009,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
               deviation <- tempData[,outcomeCol] - outmodxb
               reject = 1*(log(uDraw) > -(deviation^2) / (2*array(outcomeModResVar,dim=c(rjlimit,1))))
             }
-            else if (smtype=="logistic") {
+            else if ((smtype=="logistic") | (smtype=="brlogistic")) {
               outmodxb <-  model.matrix(as.formula(smformula),tempData) %*% outcomeModBeta
               prob = expit(outmodxb)
               prob = prob*tempData[,outcomeCol] + (1-prob)*(1-tempData[,outcomeCol])
@@ -1049,7 +1075,7 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
 
       #imputations of missing outcomes, if present (using proper imputation), for regression and logistic
       #substantive models
-      if ((smtype=="lm") | (smtype=="logistic")) {
+      if ((smtype=="lm") | (smtype=="logistic") | (smtype=="brlogistic")) {
         if (sum(r[,outcomeCol])<n) {
           imputationNeeded <- (1:n)[r[,outcomeCol]==0]
           #estimate parameters of substantive model using those with outcomes observed
@@ -1064,8 +1090,13 @@ smcfcs.core <- function(originaldata,smtype,smformula,method,predictorMatrix=NUL
             outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
             imputations[[imp]][imputationNeeded,outcomeCol] <- rnorm(length(imputationNeeded),outmodxb[imputationNeeded], sigmasq^0.5)
           }
-          else if (smtype=="logistic") {
-            ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]][r[,outcomeCol]==1,])
+          else if ((smtype=="logistic") | (smtype=="brlogistic")) {
+            if (smtype=="logistic") {
+              ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]][r[,outcomeCol]==1,])
+            } else {
+              ymod <- glm(as.formula(smformula),family="binomial",imputations[[imp]][r[,outcomeCol]==1,],
+                          method = brglm2::brglmFit)
+            }
             outcomeModBeta = modPostDraw(ymod)
             outmodxb <-  model.matrix(as.formula(smformula),imputations[[imp]]) %*% outcomeModBeta
             prob <- expit(outmodxb[imputationNeeded])
