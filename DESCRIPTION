@@ -1,8 +1,8 @@
 Package: smcfcs
 Title: Multiple Imputation of Covariates by Substantive Model
         Compatible Fully Conditional Specification
-Version: 1.7.0
-Authors@R: c(person("Jonathan", "Bartlett", email = "j.w.bartlett@bath.ac.uk",role = c("aut", "cre")),
+Version: 1.7.1
+Authors@R: c(person("Jonathan", "Bartlett", email = "jonathan.bartlett1@lshtm.ac.uk",role = c("aut", "cre")),
     person("Ruth", "Keogh", email = "ruth.keogh@lshtm.ac.uk",role = c("aut")),
     person("Edouard F.", "Bonneville",role = c("aut")),
     person("Claus Thorn", "Ekstrøm",role = c("ctb")))
@@ -19,14 +19,14 @@ LazyData: true
 Imports: MASS, survival, VGAM, stats, rlang, checkmate, abind, brglm2
 Suggests: knitr, rmarkdown, mitools, ggplot2
 VignetteBuilder: knitr
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2022-06-22 09:20:22 UTC; jwb13
+Packaged: 2022-11-07 15:55:48 UTC; jwb13
 Author: Jonathan Bartlett [aut, cre],
   Ruth Keogh [aut],
   Edouard F. Bonneville [aut],
   Claus Thorn Ekstrøm [ctb]
-Maintainer: Jonathan Bartlett <j.w.bartlett@bath.ac.uk>
+Maintainer: Jonathan Bartlett <jonathan.bartlett1@lshtm.ac.uk>
 Repository: CRAN
-Date/Publication: 2022-06-22 09:50:02 UTC
+Date/Publication: 2022-11-07 17:10:02 UTC
