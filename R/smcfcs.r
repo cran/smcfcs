@@ -124,7 +124,7 @@ smcfcs <- function(originaldata, smtype, smformula, method, predictorMatrix = NU
 #' for details on how these should be specified.
 #'
 #' @author Ruth Keogh \email{ruth.keogh@@lshtm.ac.uk}
-#' @author Jonathan Bartlett \email{j.w.bartlett@@bath.ac.uk}
+#' @author Jonathan Bartlett \email{jonathan.bartlett1@@lshtm.ac.uk}
 #'
 #' @param originaldata The case-cohort data set (NOT a full cohort data set with a case-cohort substudy within it)
 #' @param smformula A formula of the form "Surv(entertime,t,d)~x", where d is the event (d=1) or censoring (d=0) indicator, t is the event or censoring time and entertime is equal to the time origin (typically 0) for individuals in the subcohort and is equal to (t-0.001) for cases outside the subcohort [this sets cases outside the subcohort to enter follow-up just before their event time. The value 0.001 may need to be modified depending on the time scale.]
@@ -155,7 +155,7 @@ smcfcs.casecohort <- function(originaldata, smformula, sampfrac, in.subco, metho
 #' for details on how these should be specified.
 #'
 #' @author Ruth Keogh \email{ruth.keogh@@lshtm.ac.uk}
-#' @author Jonathan Bartlett \email{j.w.bartlett@@bath.ac.uk}
+#' @author Jonathan Bartlett \email{jonathan.bartlett1@@lshtm.ac.uk}
 #'
 #' @param originaldata The nested case-control data set (NOT a full cohort data set with a case-cohort substudy within it)
 #' @param smformula A formula of the form "Surv(t,case)~x+strata(set)", where case is case-control indicator, t is the event or censoring time. Note that t could be set to the case's event time for the matched controls in a given set. The right hand side should include the case control set as a strata term (see example).
@@ -188,7 +188,7 @@ smcfcs.nestedcc <- function(originaldata, smformula, set, event, nrisk, method, 
 #' a simpler parametric model for the effect of time. At the moment you can specify either a linear or quadratic
 #' effect of time (on the log odds scale).
 #'
-#' @author Jonathan Bartlett \email{j.w.bartlett@@bath.ac.uk}
+#' @author Jonathan Bartlett \email{jonathan.bartlett1@@lshtm.ac.uk}
 #'
 #' @param originaldata The data in wide form (i.e. one row per subject)
 #' @param smformula A formula of the form "Surv(t,d)~x1+x2+x3", where t is the discrete time variable, d is the binary event
@@ -224,19 +224,33 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
 
   if ((smtype %in% c(
     "lm", "logistic", "brlogistic", "poisson", "coxph", "compet", "casecohort", "nestedcc",
-    "weibull", "dtsam"
+    "weibull", "dtsam", "flexsurv"
   )) == FALSE) {
     stop(paste("Substantive model type ", smtype, " not recognised.", sep = ""))
   }
 
   # find column numbers of partially observed, fully observed variables, and outcome
-  if (smtype == "coxph") {
+  if (smtype == "flexsurv") {
+    timeCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula)[[2]][[2]])]
+    dCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula)[[2]][[3]])]
+    outcomeCol <- c(timeCol, dCol)
+    d <- originaldata[, dCol]
+    if (!(all(sort(unique(d)) == c(0, 1))) & !(all(unique(d) == 1))) {
+      stop("Event indicator for flexsurv must be coded 0/1 for censoring/event.")
+    }
+    if ((sum(is.na(d))+sum(is.na(originaldata[,timeCol])))>0) {
+      stop("Event indicator and time variables should not have NAs.")
+    }
+  } else if (smtype == "coxph") {
     timeCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula)[[2]][[2]])]
     dCol <- (1:dim(originaldata)[2])[colnames(originaldata) %in% toString(as.formula(smformula)[[2]][[3]])]
     outcomeCol <- c(timeCol, dCol)
     d <- originaldata[, dCol]
     if (!(all(sort(unique(d)) == c(0, 1))) & !(all(unique(d) == 1))) {
       stop("Event indicator for coxph must be coded 0/1 for censoring/event.")
+    }
+    if ((sum(is.na(d))+sum(is.na(originaldata[,timeCol])))>0) {
+      stop("Event indicator and time variables should not have NAs.")
     }
 
     nullMod <- survival::coxph(survival::Surv(originaldata[, timeCol], originaldata[, dCol]) ~ 1,
@@ -370,7 +384,10 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
   partialVars <- which((method == "norm") | (method == "latnorm") | (method == "logreg") | (method == "poisson") |
     (method == "podds") | (method == "mlogit") | (method == "brlogreg"))
 
-  if (length(partialVars) == 0) stop("You have not specified any valid imputation methods in the method argument.")
+  if (length(partialVars) == 0) {
+    if (((smtype=="flexsurv") & (extraArgs$imputeTimes==TRUE)) == FALSE)
+      stop("You have not specified any valid imputation methods in the method argument.")
+  }
 
   # check that methods are given for each partially observed column, and not given for fully observed columns
   for (colnum in 1:ncol(originaldata)) {
@@ -452,29 +469,32 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
   }
 
   rjFailCount <- 0
+  flexsurvFailCount <- 0
 
   for (imp in 1:m) {
     print(paste("Imputation ", imp))
 
     # initial imputation of each partially observed variable based on observed values
-    for (var in 1:length(partialVars)) {
-      targetCol <- partialVars[var]
-      if (method[targetCol] == "latnorm") {
-        # first impute any missing replicate error-prone measurements of this variable by a randomly chosen observed value
-        errorProneCols <- which(errorProneMatrix[targetCol, ] == 1)
-        for (measure in 1:length(errorProneCols)) {
-          if (sum(r[, errorProneCols[measure]]) < n) {
-            imputations[[imp]][r[, errorProneCols[measure]] == 0, errorProneCols[measure]] <- sample(imputations[[imp]][
-              r[, errorProneCols[measure]] == 1,
-              errorProneCols[measure]
-            ], size = sum(r[, errorProneCols[measure]] == 0), replace = TRUE)
+    if (length(partialVars)>0) {
+      for (var in 1:length(partialVars)) {
+        targetCol <- partialVars[var]
+        if (method[targetCol] == "latnorm") {
+          # first impute any missing replicate error-prone measurements of this variable by a randomly chosen observed value
+          errorProneCols <- which(errorProneMatrix[targetCol, ] == 1)
+          for (measure in 1:length(errorProneCols)) {
+            if (sum(r[, errorProneCols[measure]]) < n) {
+              imputations[[imp]][r[, errorProneCols[measure]] == 0, errorProneCols[measure]] <- sample(imputations[[imp]][
+                r[, errorProneCols[measure]] == 1,
+                errorProneCols[measure]
+              ], size = sum(r[, errorProneCols[measure]] == 0), replace = TRUE)
+            }
           }
-        }
 
-        # initialize latent predictors with mean of their error-prone measurements
-        imputations[[imp]][, targetCol] <- apply(imputations[[imp]][, errorProneCols], 1, mean)
-      } else {
-        imputations[[imp]][r[, targetCol] == 0, targetCol] <- sample(imputations[[imp]][r[, targetCol] == 1, targetCol], size = sum(r[, targetCol] == 0), replace = TRUE)
+          # initialize latent predictors with mean of their error-prone measurements
+          imputations[[imp]][, targetCol] <- apply(imputations[[imp]][, errorProneCols], 1, mean)
+        } else {
+          imputations[[imp]][r[, targetCol] == 0, targetCol] <- sample(imputations[[imp]][r[, targetCol] == 1, targetCol], size = sum(r[, targetCol] == 0), replace = TRUE)
+        }
       }
     }
 
@@ -528,7 +548,8 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
       # update passive variable(s)
       imputations[[imp]] <- updatePassiveVars(imputations[[imp]], method, passiveVars)
 
-      for (var in 1:length(partialVars)) {
+      if (length(partialVars)>0) {
+        for (var in 1:length(partialVars)) {
         targetCol <- partialVars[var]
         if (is.null(predictorMatrix)) {
           predictorCols <- c(partialVars[!partialVars %in% targetCol], fullObsVars)
@@ -727,6 +748,46 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
           if (noisy == TRUE) {
             print(summary(ymod))
           }
+        } else if (smtype == "flexsurv") {
+          if (cyclenum==1) {
+            tryCatch({
+              ymod <- flexsurv::flexsurvspline(as.formula(smformula), imputations[[imp]],
+                                    k=extraArgs$k, scale="hazard")
+            },error = function(e) {
+              # Silently increment the failure counter
+              flexsurvFailCount <<- flexsurvFailCount + 1
+            })
+          } else {
+            # use previous estimates as initial values, to try and prevent non-convergence
+            tryCatch(
+              {
+                # first attempt to fit model
+                if (extraArgs$originalKnots==FALSE) {
+                  ymod <- flexsurv::flexsurvspline(as.formula(smformula), imputations[[imp]],
+                                                   k=extraArgs$k, scale="hazard",
+                                                   inits=flexsurvEsts)
+                } else {
+                  ymod <- flexsurv::flexsurvspline(as.formula(smformula), imputations[[imp]],
+                                                   scale="hazard",
+                                                   knots=ymod$knots[2:(length(ymod$knots)-1)],
+                                                   inits=flexsurvEsts)
+                }
+              },
+              error = function(e) {
+                # Silently increment the failure counter
+                flexsurvFailCount <<- flexsurvFailCount + 1
+              }
+              )
+          }
+          # save parameter estimates to use as initial values in subsequent iterations
+          # to help prevent convergence problems
+          flexsurvEsts <- ymod$res.t[,1]
+          outcomeModBeta <- as.numeric(flexsurv::normboot.flexsurvreg(ymod, B=1, raw=TRUE))
+          # overwrite model estimates in fitted model object
+          ymod$res.t[,1] <- outcomeModBeta
+          if (noisy == TRUE) {
+            print(ymod)
+          }
         } else if (smtype == "weibull") {
           ymod <- survival::survreg(as.formula(smformula), data = imputations[[imp]], dist = "weibull")
           outcomeModBeta <- c(coef(ymod), log(ymod$scale)) +
@@ -866,6 +927,16 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
               outmodxb <- model.matrix(as.formula(smformula), imputations[[imp]])
               outmodxb <- as.matrix(outmodxb[, 2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
               outcomeDens <- exp(-H0[imputationNeeded] * exp(outmodxb[imputationNeeded])) * (exp(outmodxb[imputationNeeded])^d[imputationNeeded])
+            } else if (smtype == "flexsurv") {
+              survEst <- summary(ymod, newdata=imputations[[imp]][imputationNeeded,], type="survival",
+                                 ci=FALSE, t=imputations[[imp]][imputationNeeded,timeCol],
+                                 cross=FALSE, tidy=TRUE)
+              survEst <- as.matrix(survEst)[,"est"]
+              hazEst <- summary(ymod, newdata=imputations[[imp]][imputationNeeded,], type="hazard",
+                                ci=FALSE, t=imputations[[imp]][imputationNeeded,timeCol],
+                                cross=FALSE, tidy=TRUE)
+              hazEst <- as.matrix(hazEst)[,"est"]
+              outcomeDens <- survEst*(hazEst^imputations[[imp]][imputationNeeded,dCol])
             } else if (smtype == "nestedcc") {
               outmodxb <- model.matrix(as.formula(smformula2), imputations[[imp]])
               outmodxb <- as.matrix(outmodxb[, 2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
@@ -947,6 +1018,22 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
               prob <- exp(1 + outmodxb[imputationNeeded] - (H0[imputationNeeded] * exp(outmodxb[imputationNeeded]))) * H0[imputationNeeded]
               prob <- d[imputationNeeded] * prob + (1 - d[imputationNeeded]) * s_t
               reject <- 1 * (uDraw > prob)
+            } else if (smtype == "flexsurv") {
+              survEst <- summary(ymod, newdata=imputations[[imp]][imputationNeeded,], type="survival",
+                                 ci=FALSE, t=imputations[[imp]][imputationNeeded,timeCol],
+                                 cross=FALSE, tidy=TRUE)
+              survEst <- as.matrix(survEst)[,"est"]
+              hazEst <- summary(ymod, newdata=imputations[[imp]][imputationNeeded,], type="hazard",
+                                ci=FALSE, t=imputations[[imp]][imputationNeeded,timeCol],
+                                cross=FALSE, tidy=TRUE)
+              hazEst <- as.matrix(hazEst)[,"est"]
+              cumhazEst <- summary(ymod, newdata=imputations[[imp]][imputationNeeded,], type="cumhaz",
+                                ci=FALSE, t=imputations[[imp]][imputationNeeded,timeCol],
+                                cross=FALSE, tidy=TRUE)
+              cumhazEst <- as.matrix(cumhazEst)[,"est"]
+              prob <- imputations[[imp]][imputationNeeded,dCol] * (survEst*exp(1)*cumhazEst) +
+                (1 - imputations[[imp]][imputationNeeded,dCol]) * survEst
+              reject <- 1 * (uDraw > prob)
             } else if (smtype == "nestedcc") {
               outmodxb <- model.matrix(as.formula(smformula2), imputations[[imp]])
               outmodxb <- as.matrix(outmodxb[, 2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
@@ -1024,6 +1111,22 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
               prob <- exp(1 + outmodxb - (H0[i] * exp(outmodxb))) * H0[i]
               prob <- d[i] * prob + (1 - d[i]) * s_t
               reject <- 1 * (uDraw > prob)
+            } else if (smtype == "flexsurv") {
+              survEst <- summary(ymod, newdata=tempData, type="survival",
+                                 ci=FALSE, t=tempData[,timeCol],
+                                 cross=FALSE, tidy=TRUE)
+              survEst <- as.matrix(survEst)[,"est"]
+              hazEst <- summary(ymod, newdata=tempData, type="hazard",
+                                ci=FALSE, t=tempData[,timeCol],
+                                cross=FALSE, tidy=TRUE)
+              hazEst <- as.matrix(hazEst)[,"est"]
+              cumhazEst <- summary(ymod, newdata=tempData, type="cumhaz",
+                                   ci=FALSE, t=tempData[,timeCol],
+                                   cross=FALSE, tidy=TRUE)
+              cumhazEst <- as.matrix(cumhazEst)[,"est"]
+              prob <- imputations[[imp]][i,dCol] * (survEst*exp(1)*cumhazEst) +
+                (1 - imputations[[imp]][i,dCol]) * survEst
+              reject <- 1 * (uDraw > prob)
             } else if (smtype == "nestedcc") {
               outmodxb <- model.matrix(as.formula(smformula2), tempData)
               outmodxb <- as.matrix(outmodxb[, 2:dim(outmodxb)[2]]) %*% as.matrix(outcomeModBeta)
@@ -1049,6 +1152,7 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
           # update passive variables
           imputations[[imp]] <- updatePassiveVars(imputations[[imp]], method, passiveVars)
         }
+      }
       }
 
       # imputations of missing outcomes, if present (using proper imputation), for regression and logistic
@@ -1082,12 +1186,77 @@ smcfcs.core <- function(originaldata, smtype, smformula, method, predictorMatrix
             imputations[[imp]][imputationNeeded, outcomeCol] <- rbinom(length(imputationNeeded), 1, prob)
           }
         }
+      } else if (smtype == "flexsurv") {
+        if (extraArgs$imputeTimes==TRUE) {
+          # impute censored times
+          if (cyclenum==1) {
+            tryCatch({
+              ymod <- flexsurv::flexsurvspline(as.formula(smformula), imputations[[imp]],
+                                               k=extraArgs$k, scale="hazard")
+            },error = function(e) {
+              # Silently increment the failure counter
+              flexsurvFailCount <<- flexsurvFailCount + 1
+            })
+          } else {
+            # use previous estimates as initial values, to try and prevent non-convergence
+            tryCatch(
+              {
+                if (extraArgs$originalKnots==FALSE) {
+                  ymod <- flexsurv::flexsurvspline(as.formula(smformula), imputations[[imp]],
+                                                 k=extraArgs$k, scale="hazard",
+                                                 inits=flexsurvEsts)
+                } else {
+                  # use knots based on fit to original dataset where censored times had not been imputed
+                  ymod <- flexsurv::flexsurvspline(as.formula(smformula), imputations[[imp]],
+                                                   scale="hazard",
+                                                   knots=ymod$knots[2:(length(ymod$knots)-1)],
+                                                   inits=flexsurvEsts)
+                }
+              },
+              error = function(e) {
+                flexsurvFailCount <<- flexsurvFailCount + 1
+              }
+            )
+          }
+          flexsurvEsts <- ymod$res.t[,1]
+          outcomeModBeta <- as.numeric(flexsurv::normboot.flexsurvreg(ymod, B=1, raw=TRUE))
+
+          if (exists("smCoefIter")==FALSE) {
+            smCoefIter <- array(0, dim = c(m, length(outcomeModBeta), numit))
+          }
+          smCoefIter[imp, , cyclenum] <- outcomeModBeta
+
+          # overwrite model estimates in fitted model object
+          ymod$res.t[,1] <- outcomeModBeta
+          if (noisy == TRUE) {
+            print(ymod)
+          }
+
+          # impute censored times
+          if (is.null(extraArgs$censtime)) {
+            # impute all censored times
+            timeImp <- simulate(ymod, nsim=1, newdata=imputations[[imp]][d==0,],
+                              start=originaldata[d==0,timeCol])
+            imputations[[imp]][d==0,timeCol] <- timeImp$time_1
+            imputations[[imp]][,dCol] <- 1
+          } else {
+            # impute but still impose censoring at specified value(s)
+            timeImp <- simulate(ymod, nsim=1, newdata=imputations[[imp]][d==0,],
+                                start=originaldata[d==0,timeCol],
+                                censtime=extraArgs$censtime)
+            imputations[[imp]][d==0,timeCol] <- timeImp$time_1
+            imputations[[imp]][d==0,dCol] <- timeImp$event_1
+          }
+        }
       }
     }
   }
 
   if (rjFailCount > 0) {
     warning(paste("Rejection sampling failed ", rjFailCount, " times (across all variables, iterations, and imputations). You may want to increase the rejection sampling limit.", sep = ""))
+  }
+  if (flexsurvFailCount > 0) {
+    warning(paste("Flexsurv fit failed ", flexsurvFailCount, " times (across all variables, iterations, and imputations). See documentation for more details.", sep = ""))
   }
 
   # Added smformula and smtype to metadata, and make "smcfcs class"
