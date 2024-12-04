@@ -1,11 +1,11 @@
-dcfeb76e937f7e12154ea092fef4431f *DESCRIPTION
+4ea47b060f04008d11ccdc2f2f9633bc *DESCRIPTION
 a925ecbc7a589f7929dbd9f16d22ebf8 *NAMESPACE
 a295f3418615cb3d1d3db6b1569285ea *R/data.r
 5a9ace61cdfdb94ff4540ed582c721e7 *R/plot.smcfcs.R
 ed9744d1b562036da5f43dcbe362538c *R/smcfcs.finegray.R
 63e69e8ae72b840d23678fbc4829f82c *R/smcfcs.flexsurv.r
 8d168986c3c85458a473f20b93923ce6 *R/smcfcs.parallel.r
-0d9776ab51bc8714076a452ce122130c *R/smcfcs.r
+8641b3321fdf66d2d28450a078b50538 *R/smcfcs.r
 602bc8b0d2c779eb5f79845f97006441 *README.md
 76161b65639451c966be75488458b3c3 *build/partial.rdb
 a8b305e17fd00813fbdd95e1e8dd96ea *build/vignette.rds
@@ -22,10 +22,10 @@ f426249dbf00753e30619e5132f8692b *data/ex_ncc.rda
 f34e54f8e1241e1058c4b6da89c0df28 *data/ex_poisson.rda
 541a3f6a3bb14ae4cd72e19c1ae6162c *inst/doc/smcfcs-vignette.R
 38c2d38f932aa69f8d2262930f865297 *inst/doc/smcfcs-vignette.Rmd
-50a6404e3eee24e4e28d26af6e90bf68 *inst/doc/smcfcs-vignette.html
+2a3fa5c2f26f1c14b10095dbb15c056e *inst/doc/smcfcs-vignette.html
 9a7628b1188e64abdae651237bc4e61c *inst/doc/smcfcs_coverror-vignette.R
 487868e3659043bb40182b362b50eff2 *inst/doc/smcfcs_coverror-vignette.Rmd
-59f890f78009b5cf902b554421db6656 *inst/doc/smcfcs_coverror-vignette.html
+8a78a25c98e5e29e902271da664943d4 *inst/doc/smcfcs_coverror-vignette.html
 87baf6360aeb31a2f1a6a69a7a74ff0a *man/ex_cc.Rd
 213d9469951a64275721f5a8df38ddfd *man/ex_compet.Rd
 f897c23b2c1c39b7f7a4a543fc15b7a1 *man/ex_coxquad.Rd
