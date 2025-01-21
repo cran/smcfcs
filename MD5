@@ -1,11 +1,11 @@
-4ea47b060f04008d11ccdc2f2f9633bc *DESCRIPTION
+02f2ba1ca97e992318e8dbd82767e065 *DESCRIPTION
 a925ecbc7a589f7929dbd9f16d22ebf8 *NAMESPACE
 a295f3418615cb3d1d3db6b1569285ea *R/data.r
 5a9ace61cdfdb94ff4540ed582c721e7 *R/plot.smcfcs.R
 ed9744d1b562036da5f43dcbe362538c *R/smcfcs.finegray.R
 63e69e8ae72b840d23678fbc4829f82c *R/smcfcs.flexsurv.r
 8d168986c3c85458a473f20b93923ce6 *R/smcfcs.parallel.r
-8641b3321fdf66d2d28450a078b50538 *R/smcfcs.r
+7fc40a467788b0005affbce73b2ecb4d *R/smcfcs.r
 602bc8b0d2c779eb5f79845f97006441 *README.md
 76161b65639451c966be75488458b3c3 *build/partial.rdb
 a8b305e17fd00813fbdd95e1e8dd96ea *build/vignette.rds
@@ -22,10 +22,10 @@ f426249dbf00753e30619e5132f8692b *data/ex_ncc.rda
 f34e54f8e1241e1058c4b6da89c0df28 *data/ex_poisson.rda
 541a3f6a3bb14ae4cd72e19c1ae6162c *inst/doc/smcfcs-vignette.R
 38c2d38f932aa69f8d2262930f865297 *inst/doc/smcfcs-vignette.Rmd
-2a3fa5c2f26f1c14b10095dbb15c056e *inst/doc/smcfcs-vignette.html
+63403efa23b3c2e3b739587605d1c8c8 *inst/doc/smcfcs-vignette.html
 9a7628b1188e64abdae651237bc4e61c *inst/doc/smcfcs_coverror-vignette.R
 487868e3659043bb40182b362b50eff2 *inst/doc/smcfcs_coverror-vignette.Rmd
-8a78a25c98e5e29e902271da664943d4 *inst/doc/smcfcs_coverror-vignette.html
+588e3d9cdcc5cb167b622888e7996dfc *inst/doc/smcfcs_coverror-vignette.html
 87baf6360aeb31a2f1a6a69a7a74ff0a *man/ex_cc.Rd
 213d9469951a64275721f5a8df38ddfd *man/ex_compet.Rd
 f897c23b2c1c39b7f7a4a543fc15b7a1 *man/ex_coxquad.Rd
@@ -48,7 +48,7 @@ e23fc08f2c25c976df23524cf344b22a *man/smcfcs.flexsurv.Rd
 ad00fb754b814fc42cc26078f3fe280b *tests/testthat/test_biasreduced.r
 211d24eb3304d3b0108f0cba7ffe98f7 *tests/testthat/test_casecohort.r
 394a9f5b05743af58dd2e77463a0f8a8 *tests/testthat/test_coxph.r
-39b24e4f74c29f486ddc28f77da74737 *tests/testthat/test_dtsam.r
+0785eea1bbb54cf4026a34a05cfe3137 *tests/testthat/test_dtsam.r
 2307b2d88d402157c295bbcdf40efb29 *tests/testthat/test_errorchecks.R
 60553925f7cf58b56aa718773b8014e2 *tests/testthat/test_finegray.r
 4e5dddc83924df2ee1a5efb22bae787b *tests/testthat/test_flexsurv.r
