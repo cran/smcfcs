@@ -499,7 +499,7 @@ random subset, so the values were never intended to be measured.</p>
 ##  Min.   :-3.03077   Min.   :-4.36681   Min.   :-4.78473   Min.   :-4.43675  
 ##  1st Qu.:-0.82756   1st Qu.:-0.93609   1st Qu.:-1.01688   1st Qu.:-1.02676  
 ##  Median :-0.02556   Median :-0.01339   Median :-0.02595   Median :-0.13283  
-##  Mean   :-0.02280   Mean   :-0.00018   Mean   :-0.06838   Mean   :-0.08455  
+##  Mean   :-0.02281   Mean   :-0.00018   Mean   :-0.06838   Mean   :-0.08455  
 ##  3rd Qu.: 0.78154   3rd Qu.: 0.94560   3rd Qu.: 0.91115   3rd Qu.: 0.87570  
 ##  Max.   : 4.12664   Max.   : 5.20210   Max.   : 4.38671   Max.   : 4.25531</code></pre>
 <p>One thing to be wary of when imputing covariates measured with error,
@@ -567,7 +567,7 @@ imputed datasets:</p>
 ## [1] &quot;Imputation  4&quot;
 ## [1] &quot;Imputation  5&quot;</code></pre>
 <pre><code>## Warning in smcfcs.core(originaldata, smtype, smformula, method,
-## predictorMatrix, : Rejection sampling failed 38 times (across all variables,
+## predictorMatrix, : Rejection sampling failed 50 times (across all variables,
 ## iterations, and imputations). You may want to increase the rejection sampling
 ## limit.</code></pre>
 <p>We now analyse the imputed datasets, remembering to add z into the
@@ -578,10 +578,10 @@ substantive model:</p>
 <pre><code>## Multiple imputation results:
 ##       with(impobj, lm(y ~ x + z))
 ##       MIcombine.default(models)
-##                results         se     (lower      upper) missInfo
-## (Intercept) -0.0557226 0.03730903 -0.1302476  0.01880238     27 %
-## x            0.9561448 0.06151938  0.8252418  1.08704780     56 %
-## z           -0.9266750 0.04508968 -1.0227239 -0.83062610     57 %</code></pre>
+##                 results         se     (lower       upper) missInfo
+## (Intercept) -0.06986784 0.03671767 -0.1424910  0.002755316     19 %
+## x            0.87143107 0.06457764  0.7326503  1.010211874     60 %
+## z           -0.89482480 0.04187590 -0.9809260 -0.808723639     44 %</code></pre>
 <p>We see that the fraction of missing information is lower for z than
 for x. This is a consequence of the fact that we generated the
 error-prone measurements of z to have smaller error variance than for

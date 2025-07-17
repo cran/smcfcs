@@ -430,9 +430,9 @@ cross-tabulation:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">table</span>(imps<span class="sc">$</span>impDatasets[[<span class="dv">1</span>]]<span class="sc">$</span>x,imps<span class="sc">$</span>impDatasets[[<span class="dv">1</span>]]<span class="sc">$</span>xobs,<span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt;    </span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;     NA  a a/c  b b/c  c</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;   a  7 15   9  0   0  0</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   b  9  0   0 10   6  0</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;   c  9  0  13  0  11 11</span></span></code></pre></div>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;   a  8 15   9  0   0  0</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   b  2  0   0 10   5  0</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;   c 15  0  13  0  12 11</span></span></code></pre></div>
 <p>This shows that (at least in the first imputed dataset) the imputed
 values respect the partial information contained in <code>xobs</code>,
 as desired.</p>
