@@ -49,8 +49,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -61,7 +62,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -355,13 +356,13 @@ functionality of <code>smcfcs</code> for imputing such variables.</p>
 package:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(smcfcs)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">summary</span>(ex_coarsening)</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt;     x          xobs                 z                  y         </span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt;  a   :15   Length:100         Min.   :-2.08089   Min.   :-3.013  </span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt;  b   :10   Class :character   1st Qu.:-0.73366   1st Qu.:-0.179  </span></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt;  c   :11   Mode  :character   Median :-0.11602   Median : 1.169  </span></span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt;  NA&#39;s:64                      Mean   :-0.09867   Mean   : 1.081  </span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt;                               3rd Qu.: 0.61186   3rd Qu.: 2.564  </span></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt;                               Max.   : 2.06083   Max.   : 4.293</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#&gt;    x             xobs           z                  y         </span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="co">#&gt;  a  :15   Length   :100   Min.   :-2.08089   Min.   :-3.013  </span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="co">#&gt;  b  :10   N.unique :  6   1st Qu.:-0.73366   1st Qu.:-0.179  </span></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt;  c  :11   N.blank  :  0   Median :-0.11602   Median : 1.169  </span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt;  NAs:64   Min.nchar:  1   Mean   :-0.09867   Mean   : 1.081  </span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt;           Max.nchar:  3   3rd Qu.: 0.61186   3rd Qu.: 2.564  </span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co">#&gt;                           Max.   : 2.06083   Max.   : 4.293</span></span>
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">head</span>(ex_coarsening)</span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#&gt;      x xobs          z          y</span></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#&gt; 1 &lt;NA&gt;  a/c -0.5898450  2.3921826</span></span>
@@ -430,9 +431,9 @@ cross-tabulation:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">table</span>(imps<span class="sc">$</span>impDatasets[[<span class="dv">1</span>]]<span class="sc">$</span>x,imps<span class="sc">$</span>impDatasets[[<span class="dv">1</span>]]<span class="sc">$</span>xobs,<span class="at">useNA =</span> <span class="st">&quot;ifany&quot;</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt;    </span></span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;     NA  a a/c  b b/c  c</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;   a  8 15   9  0   0  0</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   b  2  0   0 10   5  0</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;   c 15  0  13  0  12 11</span></span></code></pre></div>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;   a  8 15   7  0   0  0</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   b  4  0   0 10   7  0</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt;   c 13  0  15  0  10 11</span></span></code></pre></div>
 <p>This shows that (at least in the first imputed dataset) the imputed
 values respect the partial information contained in <code>xobs</code>,
 as desired.</p>
